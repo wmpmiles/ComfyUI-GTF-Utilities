@@ -2,6 +2,7 @@
 
 
 import torch
+from math import sqrt
 
 
 def w_min_max_from_mask(mask: torch.Tensor) -> torch.Tensor:
@@ -13,29 +14,31 @@ def w_min_max_from_mask(mask: torch.Tensor) -> torch.Tensor:
     return (leftmost, rightmost)
 
 
-def bounding_box_from_mask(mask: torch.Tensor) -> torch.Tensor:
-    b, h, w = mask.shape
+def bounding_box_from_mask(mask: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    _, h, w = mask.shape
     l, r = w_min_max_from_mask(mask)
     u, d = w_min_max_from_mask(mask.transpose(1, 2))
-    w, h = [torch.tensor([[x]]).expand(b, -1) for x in (w, h)]
-    bb = torch.cat((l, r, u, d, w, h), 1)
+    hw = torch.tensor((w, h))
+    lrud = torch.cat((l, r, u, d), 1)
+    bb = (hw, lrud)
     return bb
 
 
-def clamp_bounding_box(bbox: torch.Tensor) -> torch.Tensor:
-    w = bbox[:,-2].reshape(-1, 1)
-    h = bbox[:,-1].reshape(-1, 1)
-    mins = torch.zeros(bbox.shape)
-    maxs = torch.cat((w, w, h, h, w, h), dim=1)
-    clamped = bbox.clamp(min=mins, max=maxs)
+def clamp_lrud(lrud: torch.Tensor, wh: torch.Tensor) -> torch.Tensor:
+    w = wh[0].reshape(1, 1)
+    h = wh[1].reshape(1, 1)
+    mins = torch.zeros(lrud.shape)
+    maxs = torch.cat((w, w, h, h), dim=1)
+    clamped = lrud.clamp(min=mins, max=maxs)
     return clamped
 
 
 def pad_bounding_box(bbox: torch.Tensor, padding: tuple[int, int, int, int]) -> torch.Tensor:
+    wh, lrud = bbox
     (l, r, u, d) = padding
-    term = torch.tensor((l, r, u, d, 0, 0)).reshape(1, -1)
-    bb_pad = clamp_bounding_box(bbox + term)
-    return bb_pad
+    term = torch.tensor((l, r, u, d)).reshape(1, -1)
+    padded = clamp_lrud(lrud + term, wh)
+    return (wh, padded)
 
 
 def expand_bbox_1d(l, r, w, mult):
@@ -49,12 +52,48 @@ def expand_bbox_1d(l, r, w, mult):
     return (new_l, new_r, new_mult)
 
 
-def expand_bounding_box(bbox, area_mult):
-    batches = [x.squeeze() for x in bbox.split(1)]
+def expand_lrud(lrud: torch.Tensor, wh: torch.Tensor, area_mult: float) -> torch.Tensor:
+    w, h = wh
+    unbatched = (x.squeeze() for x in lrud.split(1))
+    expanded = []
     side_mult = torch.sqrt(torch.tensor(area_mult))
-    for i, (l, r, u, d, w, h) in enumerate(batches):
+    for l, r, u, d in unbatched:
         l, r, m = expand_bbox_1d(l, r, w, side_mult)
         u, d, m = expand_bbox_1d(u, d, h, area_mult / m)
-        batches[i] = torch.cat([x.reshape(1, 1) for x in (l, r, u, d, w, h,)], 1)
-    bbox = torch.cat(batches, 0)
-    return bbox
+        expanded += [torch.tensor((l, r, u, d)).reshape(1, -1)]
+    new_lrud = torch.cat(expanded, 0)
+    return new_lrud
+
+
+def expand_lrud_square(lrud: torch.Tensor, wh: torch.Tensor, area_mult: float) -> torch.Tensor:
+    w, h = wh
+    unbatched = [x.squeeze() for x in lrud.split(1)]
+    expanded = []
+    for l, r, u, d in unbatched:
+        width = r - l
+        height = d - u
+        to_square = max(width, height) / min(width, height)
+        small_mult = min(to_square, area_mult)
+        if width > height:
+            u, d, _ = expand_bbox_1d(u, d, h, small_mult)
+        else:
+            l, r, _ = expand_bbox_1d(l, r, w, small_mult)
+        rem_mult = area_mult / small_mult
+        if rem_mult > 1:
+            side_mult = sqrt(rem_mult)
+            l, r, m = expand_bbox_1d(l, r, w, side_mult)
+            u, d, _ = expand_bbox_1d(u, d, h, rem_mult / m)
+        expanded += [torch.tensor((l, r, u, d)).reshape(1, -1)]
+    new_lrud = torch.cat(expanded, 0)
+    return new_lrud
+
+def uncrop(tensor: torch.Tensor, single_lrud: torch.Tensor, wh: torch.Tensor) -> torch.Tensor:
+    w, h = wh
+    b, c, th, tw = (int(x) for x in tensor.shape)
+    l, r, u, d = (int(x) for x in single_lrud)
+    bh, bw = (d - u, r - l)
+    if th != bh or tw != bw:
+        raise ValueError("GTF dimensions do not match bounding box dimensions.")
+    uncropped = torch.zeros(b, c, h, w)
+    uncropped[:,:,u:d,l:r] = tensor
+    return uncropped

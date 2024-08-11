@@ -23,9 +23,8 @@ NODE_CLASS_MAPPINGS = {
     "GTF | Filter - Morphological": MorphologicalFilter,
     "GTF | Colorspace - SRGB Linear to Gamma": ColorspaceSRGBLinearToGamma,
     "GTF | Colorspace - SRGB Gamma to Linear": ColorspaceSRGBGammaToLinear,
-    "GTF | Dimensions": Dimensions,
-    "GTF | Crop with Anchor": CropRelative,
-    "GTF | Pad to Multiple of 8": PadToMultOf8,
+    "GTF | Dimensions": GTFDimensions,
+    "GTF | Crop/Uncrop with Anchor": CropUncropRelative,
     "GTF | Zero": Zero,
     "GTF | One": One,
     "GTF | Float": Float,
@@ -34,13 +33,14 @@ NODE_CLASS_MAPPINGS = {
     "GTF | Reciprocal": Reciprocal,
     "GTF | Negative": Negate,
     "BBOX | From Mask": MaskToBoundingBox,
-    "BBOX | Pad": PadBoundingBox,
+    "BBOX | Change": ChangeBoundingBox,
     "BBOX | Scale Area": BoundingBoxAreaScale,
-    "BBOX | Align to 8": BoundingBoxToNearest8,
     "GTF | Crop to BBOX": CropToBoundingBox,
     "GTF | Uncrop from BBOX": UncropFromBoundingBox,
     "Scale Dimensions": ScaleDimensions,
+    "Change Dimensions": ChangeDimensions,
     "Scale Dimensions to Megapixels": ScaleDimensionsToMegapixels,
+    "Align Dimensions To": DimensionsAlignTo,
 }
 
 __all__ = ["NODE_CLASS_MAPPINGS"]
