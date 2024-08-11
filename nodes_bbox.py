@@ -61,7 +61,7 @@ class BoundingBoxAreaScale:
 
     RETURN_TYPES = ("BOUNDING_BOX", )
     RETURN_NAMES = ("bbox", )
-    CATEGORY = "bbox"
+    CATEGORY = "gtf/bbox"
     FUNCTION = "f"
 
     @staticmethod

@@ -15,7 +15,7 @@ class GTFDimensions:
 
     RETURN_TYPES = ("DIM", )
     RETURN_NAMES = ("dimensions", )
-    CATEGORY = "gtf/utils"
+    CATEGORY = "gtf/dimensions"
     FUNCTION = "f"
 
     @staticmethod
@@ -39,7 +39,7 @@ class ScaleDimensions:
 
     RETURN_TYPES = ("DIM", )
     RETURN_NAMES = ("dimensions", )
-    CATEGORY = "gtf/utils"
+    CATEGORY = "gtf/dimensions"
     FUNCTION = "f"
 
     @staticmethod
@@ -62,7 +62,7 @@ class ScaleDimensionsToMegapixels:
 
     RETURN_TYPES = ("DIM", )
     RETURN_NAMES = ("dimensions", )
-    CATEGORY = "gtf/utils"
+    CATEGORY = "gtf/dimensions"
     FUNCTION = "f"
 
 
@@ -88,7 +88,7 @@ class ChangeDimensions:
 
     RETURN_TYPES = ("DIM", )
     RETURN_NAMES = ("dimensions", )
-    CATEGORY = "gtf/utils"
+    CATEGORY = "gtf/dimensions"
     FUNCTION = "f"
 
     @staticmethod
@@ -111,7 +111,7 @@ class DimensionsAlignTo:
 
     RETURN_TYPES = ("DIM", )
     RETURN_NAMES = ("dimensions", )
-    CATEGORY = "gtf/utils"
+    CATEGORY = "gtf/dimensions"
     FUNCTION = "f"
 
     @staticmethod
@@ -120,3 +120,43 @@ class DimensionsAlignTo:
         new_width = round_to_mult_of(width, align_to)
         new_height = round_to_mult_of(height, align_to)
         return ((new_width, new_height), )
+
+
+class DimensionsFromRaw:
+    @staticmethod
+    def INPUT_TYPES():
+        return { 
+            "required": {
+                "width": ("INT", { "default": 1024, "min": 1 }),
+                "height": ("INT", { "default": 1024, "min": 1 }),
+            },
+        }
+
+    RETURN_TYPES = ("DIM", )
+    RETURN_NAMES = ("dimensions", )
+    CATEGORY = "gtf/dimensions"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(width: int, height: int) -> tuple[tuple[int, int]]:
+        return ((width, height), )
+
+
+class DimensionsToRaw:
+    @staticmethod
+    def INPUT_TYPES():
+        return { 
+            "required": {
+                "dimensions": ("DIM", {}),
+            },
+        }
+
+    RETURN_TYPES = ("INT", "INT")
+    RETURN_NAMES = ("width", "height")
+    CATEGORY = "gtf/dimensions"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(dimensions: tuple[int, int]) -> tuple[int, int]:
+        width, height = dimensions
+        return (width, height)

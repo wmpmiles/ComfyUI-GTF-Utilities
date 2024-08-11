@@ -36,8 +36,8 @@ class Multiply:
         }
 
     RETURN_TYPES = ("GTF", )
-    RETURN_NAMES = ("gtf/arithmetic", )
-    CATEGORY = "gtf"
+    RETURN_NAMES = ("gtf", )
+    CATEGORY = "gtf/arithmetic"
     FUNCTION = "f"
 
     @staticmethod
@@ -58,8 +58,8 @@ class Reciprocal:
         }
 
     RETURN_TYPES = ("GTF", )
-    RETURN_NAMES = ("gtf/arithmetic", )
-    CATEGORY = "gtf"
+    RETURN_NAMES = ("gtf", )
+    CATEGORY = "gtf/arithmetic"
     FUNCTION = "f"
 
     @staticmethod

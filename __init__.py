@@ -1,7 +1,7 @@
 from .nodes_conversion import *
 from .nodes_bbox import *
 from .nodes_resample import *
-from .nodes_utils import *
+from .nodes_dimensions import *
 from .nodes_colorspace import *
 from .nodes_filter import *
 from .nodes_arithmetic import *
@@ -23,7 +23,6 @@ NODE_CLASS_MAPPINGS = {
     "GTF | Filter - Morphological": MorphologicalFilter,
     "GTF | Colorspace - SRGB Linear to Gamma": ColorspaceSRGBLinearToGamma,
     "GTF | Colorspace - SRGB Gamma to Linear": ColorspaceSRGBGammaToLinear,
-    "GTF | Dimensions": GTFDimensions,
     "GTF | Crop/Uncrop with Anchor": CropUncropRelative,
     "GTF | Zero": Zero,
     "GTF | One": One,
@@ -37,10 +36,13 @@ NODE_CLASS_MAPPINGS = {
     "BBOX | Scale Area": BoundingBoxAreaScale,
     "GTF | Crop to BBOX": CropToBoundingBox,
     "GTF | Uncrop from BBOX": UncropFromBoundingBox,
-    "Scale Dimensions": ScaleDimensions,
-    "Change Dimensions": ChangeDimensions,
-    "Scale Dimensions to Megapixels": ScaleDimensionsToMegapixels,
-    "Align Dimensions To": DimensionsAlignTo,
+    "Dimensions | Scale": ScaleDimensions,
+    "Dimensions | Change": ChangeDimensions,
+    "Dimensions | Scale to Megapixels": ScaleDimensionsToMegapixels,
+    "Dimensions | Align To": DimensionsAlignTo,
+    "Dimensions | From Raw": DimensionsFromRaw,
+    "Dimensions | To Raw": DimensionsToRaw,
+    "Dimensions | From GTF": GTFDimensions,
 }
 
 __all__ = ["NODE_CLASS_MAPPINGS"]
