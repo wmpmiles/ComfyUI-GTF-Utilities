@@ -1,5 +1,4 @@
 import torch
-from typing import Any
 from .colorspace import srgb_gamma_to_linear, srgb_linear_to_gamma
 
 
@@ -18,10 +17,9 @@ class ColorspaceSRGBGammaToLinear:
     FUNCTION = "f"
 
     @staticmethod
-    def f(gtf: tuple[torch.Tensor, str, Any]) -> tuple[tuple[torch.Tensor, str, Any]]:
-        tensor, typeinfo, extra = gtf
-        linear = srgb_gamma_to_linear(tensor)
-        return ((linear, typeinfo, extra), )
+    def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
+        linear = srgb_gamma_to_linear(gtf)
+        return (linear, )
 
 
 class ColorspaceSRGBLinearToGamma:
@@ -39,7 +37,6 @@ class ColorspaceSRGBLinearToGamma:
     FUNCTION = "f"
 
     @staticmethod
-    def f(gtf: tuple[torch.Tensor, str, Any]) -> tuple[tuple[torch.Tensor, str, Any]]:
-        tensor, typeinfo, extra = gtf
-        linear = srgb_linear_to_gamma(tensor)
-        return ((linear, typeinfo, extra), )
+    def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
+        gamma = srgb_linear_to_gamma(gtf)
+        return (gamma, )

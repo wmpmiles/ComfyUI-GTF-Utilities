@@ -13,21 +13,12 @@ from typing import Callable, Iterable
 
 import torch
 import math
+from .utils import slice_dim
 
 
 ###                   ###
 ### UTILITY FUNCTIONS ###
 ###                   ###
-
-def slice_dim(
-    dim: int, 
-    start: int | None, 
-    stop: int | None, 
-    step: int | None = 1
-) -> list[slice]:
-    slices = [slice(None) for _ in range(dim)] + [slice(start, stop, step)]
-    return slices
-
 
 def outer_sum(lhs, rhs):
     ret = lhs.unsqueeze(1) + rhs

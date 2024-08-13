@@ -4,6 +4,7 @@
 import torch
 import torch.signal as S
 import torch.nn.functional as F
+from .utils import gtf_max, gtf_min, tensor_invert
 
 
 def blur_gaussian(tensor: torch.Tensor, sigma: float) -> torch.Tensor:
@@ -25,10 +26,6 @@ def blur_gaussian(tensor: torch.Tensor, sigma: float) -> torch.Tensor:
     tensor_blurred_wh = F.conv2d(tensor_blurred_w, kernel_permuted, padding=0, groups=channels)
     return tensor_blurred_wh
 
-
-def tensor_invert(tensor: torch.Tensor) -> torch.Tensor:
-    inverted = (1.0 - tensor)
-    return inverted
 
 ###                       ###
 ### MORPHOLOGICAL FILTERS ###
@@ -75,3 +72,16 @@ def tensor_open(tensor: torch.Tensor, radius: int) -> torch.Tensor:
     """
     opened = tensor_dilate(tensor_erode(tensor, radius), radius)
     return opened
+
+###               ###
+### OTHER FILTERS ###
+###               ###
+
+def stretch_contrast(tensor: torch.Tensor, min: float = 0.0, max: float = 1.0) -> torch.Tensor:
+    cur_min = gtf_min(tensor)
+    minned = tensor - (cur_min - min)
+    cur_max = gtf_max(minned)
+    maxxed = minned * (max / cur_max)
+    clamped = maxxed.clamp(min, max)
+    return clamped
+

@@ -1,6 +1,7 @@
 import torch
-from typing import Any
-from .resample import nearest_neighbor_resample_2d, filter_resample_2d, filter_resample_2d_seperable, area_resample_2d, triangle_filter, lanczos_filter, mitchell_netravali_filter, mitchell_netravali_radius
+from .resample import nearest_neighbor_resample_2d, filter_resample_2d, \
+    filter_resample_2d_seperable, area_resample_2d, triangle_filter, \
+    lanczos_filter, mitchell_netravali_filter, mitchell_netravali_radius
 
 class ResampleNearestNeighbor:
     @classmethod
@@ -8,8 +9,7 @@ class ResampleNearestNeighbor:
         return { 
             "required": {
                 "gtf": ("GTF", {}),
-                "width": ("INT", { "default": 1024, "min": 1 }),
-                "height": ("INT", { "default": 1024, "min": 1 }),
+                "dimensions": ("DIM", {}),
             },
         }
 
@@ -19,10 +19,13 @@ class ResampleNearestNeighbor:
     FUNCTION = "f"
 
     @staticmethod
-    def f(gtf: tuple[torch.Tensor, str, Any], width: int, height: int) -> tuple[torch.Tensor, str, Any]:
-        tensor, typeinfo, extra = gtf
-        resampled = nearest_neighbor_resample_2d(tensor, (height, width), (2, 3))
-        return ((resampled, typeinfo, extra), )
+    def f(
+        gtf: torch.Tensor, 
+        dimensions: tuple[int, int],
+    ) -> tuple[torch.Tensor]:
+        width, height = dimensions
+        resampled = nearest_neighbor_resample_2d(gtf, (height, width), (2, 3))
+        return (resampled, )
 
 
 class ResampleTriangle:
@@ -31,8 +34,7 @@ class ResampleTriangle:
         return { 
             "required": {
                 "gtf": ("GTF", {}),
-                "width": ("INT", { "default": 1024, "min": 1 }),
-                "height": ("INT", { "default": 1024, "min": 1 }),
+                "dimensions": ("DIM", {}),
                 "radius": ("INT", { "default": 1, "min": 1 }),
                 "seperable": ("BOOLEAN", { "default": True }),
             },
@@ -44,12 +46,17 @@ class ResampleTriangle:
     FUNCTION = "f"
 
     @staticmethod
-    def f(gtf: tuple[torch.Tensor, str, Any], width: int, height: int, radius: int, seperable: bool) -> tuple[torch.Tensor, str, Any]:
-        tensor, typeinfo, extra = gtf
+    def f(
+        gtf: torch.Tensor, 
+        dimensions: tuple[int, int], 
+        radius: int, 
+        seperable: bool,
+    ) -> tuple[torch.Tensor]:
+        width, height = dimensions
         filter = triangle_filter(radius)
         fn = filter_resample_2d_seperable if seperable else filter_resample_2d
-        resampled = fn(tensor, (height, width), radius, filter, (2, 3))
-        return ((resampled, typeinfo, extra), )
+        resampled = fn(gtf, (height, width), radius, filter, (2, 3))
+        return (resampled, )
 
 
 class ResampleLanczos:
@@ -58,9 +65,8 @@ class ResampleLanczos:
         return { 
             "required": {
                 "gtf": ("GTF", {}),
-                "width": ("INT", { "default": 1024, "min": 1 }),
-                "height": ("INT", { "default": 1024, "min": 1 }),
-                "radius": ("INT", { "default": 3, "min": 1 }),
+                "dimensions": ("DIM", {}),
+                "radius": ("INT", { "default": 4, "min": 1 }),
                 "seperable": ("BOOLEAN", { "default": True }),
             },
         }
@@ -71,12 +77,17 @@ class ResampleLanczos:
     FUNCTION = "f"
 
     @staticmethod
-    def f(gtf: tuple[torch.Tensor, str, Any], width: int, height: int, radius: int, seperable: bool) -> tuple[torch.Tensor, str, Any]:
-        tensor, typeinfo, extra = gtf
+    def f(
+        gtf: torch.Tensor, 
+        dimensions: tuple[int, int], 
+        radius: int, 
+        seperable: bool,
+    ) -> tuple[torch.Tensor]:
+        width, height = dimensions
         filter = lanczos_filter(radius)
         fn = filter_resample_2d_seperable if seperable else filter_resample_2d
-        resampled = fn(tensor, (height, width), radius, filter, (2, 3))
-        return ((resampled, typeinfo, extra), )
+        resampled = fn(gtf, (height, width), radius, filter, (2, 3))
+        return (resampled, )
 
 
 class ResampleMitchellNetravali:
@@ -85,10 +96,11 @@ class ResampleMitchellNetravali:
         return { 
             "required": {
                 "gtf": ("GTF", {}),
-                "width": ("INT", { "default": 1024, "min": 1 }),
-                "height": ("INT", { "default": 1024, "min": 1 }),
-                "b": ("FLOAT", { "default": 0.33, "min": 0, "max": 1, "step": 0.01 }),
-                "c": ("FLOAT", { "default": 0.33, "min": 0, "max": 1, "step": 0.01 }),
+                "dimensions": ("DIM", {}),
+                "b": ("FLOAT", 
+                        { "default": 0.33, "min": 0, "max": 1, "step": 0.01 }),
+                "c": ("FLOAT", 
+                        { "default": 0.33, "min": 0, "max": 1, "step": 0.01 }),
                 "seperable": ("BOOLEAN", { "default": True }),
             },
         }
@@ -99,12 +111,19 @@ class ResampleMitchellNetravali:
     FUNCTION = "f"
 
     @staticmethod
-    def f(gtf: tuple[torch.Tensor, str, Any], width: int, height: int, b: float, c: float, seperable: bool) -> tuple[torch.Tensor, str, Any]:
-        tensor, typeinfo, extra = gtf
+    def f(
+        gtf: torch.Tensor, 
+        dimensions: tuple[int, int], 
+        b: float, 
+        c: float, 
+        seperable: bool
+    ) -> tuple[torch.Tensor]:
+        width, height = dimensions
         filter = mitchell_netravali_filter(b, c)
         fn = filter_resample_2d_seperable if seperable else filter_resample_2d
-        resampled = fn(tensor, (height, width), mitchell_netravali_radius(), filter, (2, 3))
-        return ((resampled, typeinfo, extra), )
+        radius = mitchell_netravali_radius()
+        resampled = fn(gtf, (height, width), radius, filter, (2, 3))
+        return (resampled, )
 
 
 class ResampleArea:
@@ -113,8 +132,7 @@ class ResampleArea:
         return { 
             "required": {
                 "gtf": ("GTF", {}),
-                "width": ("INT", { "default": 1024, "min": 1 }),
-                "height": ("INT", { "default": 1024, "min": 1 }),
+                "dimensions": ("DIM", {}),
             },
         }
 
@@ -124,7 +142,10 @@ class ResampleArea:
     FUNCTION = "f"
 
     @staticmethod
-    def f(gtf: tuple[torch.Tensor, str, Any], width: int, height: int) -> tuple[torch.Tensor, str, Any]:
-        tensor, typeinfo, extra = gtf
-        resampled = area_resample_2d(tensor, (height, width), (2, 3))
-        return ((resampled, typeinfo, extra), )
+    def f(
+        gtf: torch.Tensor, 
+        dimensions: tuple[int, int]
+    ) -> tuple[torch.Tensor]:
+        width, height = dimensions
+        resampled = area_resample_2d(gtf, (height, width), (2, 3))
+        return (resampled, )

@@ -1,5 +1,4 @@
 from math import sqrt
-from typing import Any
 import torch
 from .utils import round_to_mult_of
 
@@ -19,9 +18,8 @@ class GTFDimensions:
     FUNCTION = "f"
 
     @staticmethod
-    def f(gtf: tuple[torch.Tensor, str, Any]) -> tuple[tuple[int, int]]:
-        tensor, _, _ = gtf
-        s = tensor.shape
+    def f(gtf: torch.Tensor) -> tuple[tuple[int, int]]:
+        s = gtf.shape
         dimensions = tuple(map(int, (s[3], s[2])))
         return (dimensions, )
 

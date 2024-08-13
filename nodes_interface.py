@@ -14,13 +14,13 @@ class ImagesToGTF:
 
     RETURN_TYPES = ("GTF", )
     RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/conversion"
+    CATEGORY = "gtf/interface"
     FUNCTION = "f"
 
     @staticmethod
-    def f(images: torch.Tensor) -> tuple[tuple[torch.Tensor, str, Any]]:
+    def f(images: torch.Tensor) -> tuple[torch.Tensor]:
         tensor = images.permute(0, 3, 1, 2)
-        return ((tensor, "IMAGE", None), )
+        return (tensor, )
 
 
 class MasksToGTF:
@@ -34,13 +34,13 @@ class MasksToGTF:
 
     RETURN_TYPES = ("GTF", )
     RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/conversion"
+    CATEGORY = "gtf/interface"
     FUNCTION = "f"
 
     @staticmethod
-    def f(masks: torch.Tensor) -> tuple[tuple[torch.Tensor, str, Any]]:
+    def f(masks: torch.Tensor) -> tuple[torch.Tensor]:
         tensor = masks.unsqueeze(1)
-        return ((tensor, "MASK", None), )
+        return (tensor, )
 
 
 class LatentsToGTF:
@@ -54,13 +54,13 @@ class LatentsToGTF:
 
     RETURN_TYPES = ("GTF", )
     RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/conversion"
+    CATEGORY = "gtf/interface"
     FUNCTION = "f"
 
     @staticmethod
-    def f(latents: dict[str, torch.Tensor]) -> tuple[tuple[torch.Tensor, str, Any]]:
+    def f(latents: dict[str, torch.Tensor]) -> tuple[torch.Tensor]:
         tensor = latents["samples"]
-        return ((tensor, "LATENT", copy(latents)), )
+        return (tensor, )
 
 
 class GTFToImages:
@@ -74,15 +74,12 @@ class GTFToImages:
 
     RETURN_TYPES = ("IMAGE", )
     RETURN_NAMES = ("images", )
-    CATEGORY = "gtf/conversion"
+    CATEGORY = "gtf/interface"
     FUNCTION = "f"
 
     @staticmethod
-    def f(gtf: tuple[torch.Tensor, str, Any]) -> tuple[torch.Tensor]:
-        tensor, typeinfo, _ = gtf
-        if typeinfo != "IMAGE":
-            raise ValueError("Cannot convert GTF from non-image source back to image.")
-        images = tensor.permute(0, 2, 3, 1)
+    def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
+        images = gtf.permute(0, 2, 3, 1)
         return (images, )
 
 
@@ -97,19 +94,18 @@ class GTFToMasks:
 
     RETURN_TYPES = ("MASK", )
     RETURN_NAMES = ("masks", )
-    CATEGORY = "gtf/conversion"
+    CATEGORY = "gtf/interface"
     FUNCTION = "f"
 
     @staticmethod
-    def f(gtf: tuple[torch.Tensor, str, Any]) -> tuple[torch.Tensor]:
-        tensor, typeinfo, _ = gtf
-        if typeinfo != "MASK":
-            raise ValueError("Cannot convert GTF from non-mask source back to masks.")
-        masks = tensor.squeeze(1)
+    def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
+        if gtf.shape[1] != 1:
+            raise ValueError("Cannot convert multi-channel GTF to mask.")
+        masks = gtf.squeeze(1)
         return (masks, )
 
 
-class GTFToLatents:
+class GTFToNewLatents:
     @staticmethod
     def INPUT_TYPES():
         return { 
@@ -120,13 +116,32 @@ class GTFToLatents:
 
     RETURN_TYPES = ("LATENT", )
     RETURN_NAMES = ("latents", )
-    CATEGORY = "gtf/conversion"
+    CATEGORY = "gtf/interface"
     FUNCTION = "f"
 
     @staticmethod
-    def f(gtf: tuple[torch.Tensor, str, Any]) -> tuple[dict]:
-        tensor, typeinfo, latents = gtf
-        if typeinfo != "LATENT":
-            raise ValueError("Cannot convert GTF from non-latent source back to latents.")
-        latents["samples"] = tensor
+    def f(gtf: torch.Tensor) -> tuple[dict]:
+        latents = {"samples": gtf}
+        return (latents, )
+
+
+class GTFUpdateLatents:
+    @staticmethod
+    def INPUT_TYPES():
+        return { 
+            "required": {
+                "gtf": ("GTF", {}),
+                "latents": ("LATENT", {}),
+            },
+        }
+
+    RETURN_TYPES = ("LATENT", )
+    RETURN_NAMES = ("latents", )
+    CATEGORY = "gtf/interface"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(gtf: torch.Tensor, latents: dict[str, torch.Tensor]) -> tuple[dict]:
+        updated_latents = copy(latents)
+        updated_latents["samples"] = gtf
         return (latents, )

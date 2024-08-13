@@ -2,6 +2,7 @@
 
 
 import torch
+import torch.nn.functional as F
 from math import sqrt
 
 
@@ -87,13 +88,59 @@ def expand_lrud_square(lrud: torch.Tensor, wh: torch.Tensor, area_mult: float) -
     new_lrud = torch.cat(expanded, 0)
     return new_lrud
 
-def uncrop(tensor: torch.Tensor, single_lrud: torch.Tensor, wh: torch.Tensor) -> torch.Tensor:
-    w, h = wh
-    b, c, th, tw = (int(x) for x in tensor.shape)
-    l, r, u, d = (int(x) for x in single_lrud)
-    bh, bw = (d - u, r - l)
-    if th != bh or tw != bw:
-        raise ValueError("GTF dimensions do not match bounding box dimensions.")
-    uncropped = torch.zeros(b, c, h, w)
-    uncropped[:,:,u:d,l:r] = tensor
-    return uncropped
+
+def component_coloring(tensor: torch.Tensor) -> torch.Tensor:
+    from time import perf_counter
+    s1 = perf_counter()
+    binary = tensor.clamp(0, 1).round()
+    b, c, h, w = binary.shape
+    prepend = torch.zeros(b, c, h, 1)
+    diffed = torch.diff(binary, dim=3, prepend=prepend).clamp(0, 1)
+    cumsum = torch.cumsum(diffed, 3)
+    row_indices = torch.arange(0, h) 
+    offset_base = ((w + 1) // 2) + 1
+    row_offsets = row_indices * offset_base
+    cumsum_offset = (cumsum + row_offsets.reshape(1, 1, -1, 1))
+    coloring_1d =  cumsum_offset * binary
+    binary_unfolded = F.unfold(binary, (2, 1))
+    coloring_unfolded = F.unfold(coloring_1d, (2, 1))
+    adjacent = torch.logical_and(binary_unfolded[:,0], binary_unfolded[:,1])
+    adjacent_mask = adjacent.reshape(1, 1, -1).expand(b, 2 * c, -1)
+    equivalences = coloring_unfolded[adjacent_mask].reshape(b, c, 2, -1)
+    coloring_2d = coloring_1d.clone()
+    for b, cumsum_b, equiv_b in zip(coloring_2d.split(1), cumsum_offset.split(1), equivalences.split(1)):
+        for c, cumsum_c, equiv_c in zip(b.squeeze(0).split(1), cumsum_b.squeeze(0).split(1), equiv_b.squeeze(0).split(1)):
+            unique_c = torch.unique_consecutive(cumsum_c.squeeze(0))
+            unique = unique_c[unique_c % offset_base != 0].to(torch.int)
+            #unique = [int(x) for x in unique_filtered]
+            umax = int(unique[-1])
+            parent = list(range(umax + 1))
+            # TODO: test unique equiv
+            for pair in ([int(y) for y in x.squeeze(0)] for x in equiv_c.squeeze(0).T.split(1)):
+                if parent[pair[1]] != pair[1]:
+                    parent[pair[0]] = parent[pair[1]]
+                else:
+                    parent[pair[1]] = parent[pair[0]]
+            # relabel, TODO: look at index_select based (unique on parent)
+            label = 1
+            for u in unique:
+                u = int(u)
+                if parent[u] == u:
+                    parent[u] = label
+                    label += 1
+                else:
+                    parent[u] = parent[parent[u]]
+            # replace
+            index_map = torch.zeros((umax + 1, ))
+            index_map[unique] = torch.tensor(parent)[unique].to(torch.float)
+            c.reshape(-1)[:] = index_map.index_select(0, c.reshape(-1).to(torch.int32))
+    s2 = perf_counter()
+    print(s2 - s1)
+    return coloring_2d
+
+
+a = torch.randn(1, 1, 1000, 1000).clamp(0, 1).round() 
+b = torch.tensor([[[[1, 0, 1,],[1, 1, 1]]]]).to(torch.float)
+print(component_coloring(a[0:1, 0:1, :1000, :1000])[0, 0, :5, :10])
+print(component_coloring(a[0:1, 0:1, :1000, :1000])[0, 0, -5:, -5:])
+print(component_coloring(b))
