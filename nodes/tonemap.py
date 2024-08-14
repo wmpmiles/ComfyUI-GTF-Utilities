@@ -1,5 +1,5 @@
 import torch
-from .tonemap import *
+from ..impl.tonemap import *
 
 
 class TonemapReinhard:

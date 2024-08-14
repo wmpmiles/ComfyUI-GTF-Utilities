@@ -1,6 +1,6 @@
 import torch
 from typing import Any
-from .transform import crop_uncrop, uncrop_bbox
+from ..impl.transform import crop_uncrop, uncrop_bbox
 
 class CropUncropRelative:
     @classmethod
@@ -88,16 +88,15 @@ class UncropFromBoundingBox:
     FUNCTION = "f"
 
     @staticmethod
-    def f(gtf: list[tuple[torch.Tensor, str, Any]], bbox: list[tuple[torch.Tensor, torch.Tensor]]) -> tuple[tuple[torch.Tensor, str, Any]]:
+    def f(gtf: list[torch.Tensor], bbox: list[tuple[torch.Tensor, torch.Tensor]]) -> tuple[list[torch.Tensor]]:
         wh, lrud = bbox[0]
         if lrud.shape[0] != len(gtf):
             raise ValueError("GTF and bbox batch size must match.")
         unbatched = (x.squeeze() for x in lrud.split(1))
         uncropped_list = []
         for single_gtf, single_lrud in zip(gtf, unbatched):
-            tensor, typeinfo, extra = single_gtf
-            uncropped = uncrop_bbox(tensor, single_lrud, wh)
-            uncropped_list += [(uncropped, typeinfo, extra)]
+            uncropped = uncrop_bbox(single_gtf, single_lrud, wh)
+            uncropped_list += [uncropped]
         return (uncropped_list, )
 
 
@@ -117,10 +116,8 @@ class BatchGTF:
     FUNCTION = "f"
 
     @staticmethod
-    def f(gtf_1: tuple[torch.Tensor, str, Any], gtf_2: tuple[torch.Tensor, str, Any]) -> tuple[tuple[torch.Tensor, str, Any]]:
-        tensor1, typeinfo, extra = gtf_1
-        tensor2, _, _ = gtf_2
-        if tensor1.shape[1:] != tensor2.shape[1:]:
+    def f(gtf_1: torch.Tensor, gtf_2: torch.Tensor) -> tuple[torch.Tensor]:
+        if gtf_1.shape[1:] != gtf_2.shape[1:]:
             raise ValueError("GTFs must have the same dimensions in all but batch count to be batched together.")
-        tensor = torch.cat((tensor1, tensor2))
-        return ((tensor, typeinfo, extra), )
+        batched = torch.cat((gtf_1, gtf_2))
+        return (batched, )

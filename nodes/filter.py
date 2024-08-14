@@ -1,5 +1,5 @@
 import torch
-from .filter import blur_gaussian, tensor_close, tensor_dilate, tensor_erode, tensor_open
+from ..impl.filter import blur_gaussian, tensor_close, tensor_dilate, tensor_erode, tensor_open
 
 
 class MorphologicalFilter:

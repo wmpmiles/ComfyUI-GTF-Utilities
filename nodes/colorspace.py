@@ -1,5 +1,5 @@
 import torch
-from .colorspace import srgb_gamma_to_linear, srgb_linear_to_gamma
+from ..impl.colorspace import srgb_gamma_to_linear, srgb_linear_to_gamma
 
 
 class ColorspaceSRGBGammaToLinear:

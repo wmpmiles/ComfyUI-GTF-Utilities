@@ -1,6 +1,6 @@
 import torch
-from .convert import to_luminance
-from .utils import gtf_min_max
+from ..impl.convert import to_luminance
+from ..impl.utils import gtf_min_max
 
 
 class Luminance:

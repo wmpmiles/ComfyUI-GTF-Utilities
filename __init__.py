@@ -1,21 +1,21 @@
 """
 @author: wmpmiles
 @title: GTF Utilities
-@Nickname: GTFU
+@nickname: GTFU
 @description: TODO
 """
 
-from .nodes_interface import *
-from .nodes_bbox import *
-from .nodes_resample import *
-from .nodes_dimensions import *
-from .nodes_colorspace import *
-from .nodes_filter import *
-from .nodes_arithmetic import *
-from .nodes_transform import *
-from .nodes_tonemap import *
-from .nodes_grading import *
-from .nodes_convert import *
+from .nodes.interface import *
+from .nodes.bbox import *
+from .nodes.resample import *
+from .nodes.dimensions import *
+from .nodes.colorspace import *
+from .nodes.filter import *
+from .nodes.arithmetic import *
+from .nodes.transform import *
+from .nodes.tonemap import *
+from .nodes.grading import *
+from .nodes.convert import *
 
 NODE_CLASS_MAPPINGS = {
     # Interface

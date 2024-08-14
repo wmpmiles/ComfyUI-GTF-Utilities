@@ -1,6 +1,6 @@
 from math import sqrt
 import torch
-from .utils import round_to_mult_of
+from ..impl.utils import round_to_mult_of
 
 
 class GTFDimensions:

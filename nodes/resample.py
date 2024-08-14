@@ -1,5 +1,5 @@
 import torch
-from .resample import nearest_neighbor_resample_2d, filter_resample_2d, \
+from ..impl.resample import nearest_neighbor_resample_2d, filter_resample_2d, \
     filter_resample_2d_seperable, area_resample_2d, triangle_filter, \
     lanczos_filter, mitchell_netravali_filter, mitchell_netravali_radius
 

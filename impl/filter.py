@@ -4,7 +4,7 @@
 import torch
 import torch.signal as S
 import torch.nn.functional as F
-from .utils import gtf_max, gtf_min, tensor_invert
+from .utils import gtf_min_max, tensor_invert
 
 
 def blur_gaussian(tensor: torch.Tensor, sigma: float) -> torch.Tensor:
@@ -78,9 +78,9 @@ def tensor_open(tensor: torch.Tensor, radius: int) -> torch.Tensor:
 ###               ###
 
 def stretch_contrast(tensor: torch.Tensor, min: float = 0.0, max: float = 1.0) -> torch.Tensor:
-    cur_min = gtf_min(tensor)
+    cur_min = gtf_min_max(tensor, (2, 3), False)
     minned = tensor - (cur_min - min)
-    cur_max = gtf_max(minned)
+    cur_max = gtf_min_max(minned, (2, 3), True)
     maxxed = minned * (max / cur_max)
     clamped = maxxed.clamp(min, max)
     return clamped

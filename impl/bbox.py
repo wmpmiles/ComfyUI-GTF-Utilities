@@ -139,8 +139,8 @@ def component_coloring(tensor: torch.Tensor) -> torch.Tensor:
     return coloring_2d
 
 
-a = torch.randn(1, 1, 1000, 1000).clamp(0, 1).round() 
-b = torch.tensor([[[[1, 0, 1,],[1, 1, 1]]]]).to(torch.float)
-print(component_coloring(a[0:1, 0:1, :1000, :1000])[0, 0, :5, :10])
-print(component_coloring(a[0:1, 0:1, :1000, :1000])[0, 0, -5:, -5:])
-print(component_coloring(b))
+#a = torch.randn(1, 1, 1000, 1000).clamp(0, 1).round() 
+#b = torch.tensor([[[[1, 0, 1,],[1, 1, 1]]]]).to(torch.float)
+#print(component_coloring(a[0:1, 0:1, :1000, :1000])[0, 0, :5, :10])
+#print(component_coloring(a[0:1, 0:1, :1000, :1000])[0, 0, -5:, -5:])
+#print(component_coloring(b))

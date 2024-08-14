@@ -1,5 +1,5 @@
 import torch
-from .bbox import bounding_box_from_mask, pad_bounding_box, expand_lrud, expand_lrud_square
+from ..impl.bbox import bounding_box_from_mask, pad_bounding_box, expand_lrud, expand_lrud_square
 
 
 class MaskToBoundingBox:
