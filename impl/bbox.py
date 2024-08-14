@@ -91,7 +91,7 @@ def expand_lrud_square(lrud: torch.Tensor, wh: torch.Tensor, area_mult: float) -
 
 def component_coloring(tensor: torch.Tensor) -> torch.Tensor:
     from time import perf_counter
-    s1 = perf_counter()
+    begin = perf_counter()
     binary = tensor.clamp(0, 1).round()
     b, c, h, w = binary.shape
     prepend = torch.zeros(b, c, h, 1)
@@ -108,15 +108,18 @@ def component_coloring(tensor: torch.Tensor) -> torch.Tensor:
     adjacent_mask = adjacent.reshape(1, 1, -1).expand(b, 2 * c, -1)
     equivalences = coloring_unfolded[adjacent_mask].reshape(b, c, 2, -1)
     coloring_2d = coloring_1d.clone()
+    # ~0.02
     for b, cumsum_b, equiv_b in zip(coloring_2d.split(1), cumsum_offset.split(1), equivalences.split(1)):
         for c, cumsum_c, equiv_c in zip(b.squeeze(0).split(1), cumsum_b.squeeze(0).split(1), equiv_b.squeeze(0).split(1)):
+            s1 = perf_counter()
             unique_c = torch.unique_consecutive(cumsum_c.squeeze(0))
-            unique = unique_c[unique_c % offset_base != 0].to(torch.int)
-            #unique = [int(x) for x in unique_filtered]
+            s2 = perf_counter()
+            unique = unique_c[unique_c % offset_base != 0].to(torch.int).tolist()
+            s3 = perf_counter()
             umax = int(unique[-1])
             parent = list(range(umax + 1))
-            # TODO: test unique equiv
-            for pair in ([int(y) for y in x.squeeze(0)] for x in equiv_c.squeeze(0).T.split(1)):
+            equiv = equiv_c.squeeze(0).T.to(torch.int).tolist()
+            for pair in equiv:
                 if parent[pair[1]] != pair[1]:
                     parent[pair[0]] = parent[pair[1]]
                 else:
@@ -124,7 +127,6 @@ def component_coloring(tensor: torch.Tensor) -> torch.Tensor:
             # relabel, TODO: look at index_select based (unique on parent)
             label = 1
             for u in unique:
-                u = int(u)
                 if parent[u] == u:
                     parent[u] = label
                     label += 1
@@ -134,13 +136,15 @@ def component_coloring(tensor: torch.Tensor) -> torch.Tensor:
             index_map = torch.zeros((umax + 1, ))
             index_map[unique] = torch.tensor(parent)[unique].to(torch.float)
             c.reshape(-1)[:] = index_map.index_select(0, c.reshape(-1).to(torch.int32))
-    s2 = perf_counter()
-    print(s2 - s1)
+            print(s2 - s1, s3 - s2)
+    end = perf_counter()
+    print(end - begin)
     return coloring_2d
 
 
-#a = torch.randn(1, 1, 1000, 1000).clamp(0, 1).round() 
-#b = torch.tensor([[[[1, 0, 1,],[1, 1, 1]]]]).to(torch.float)
-#print(component_coloring(a[0:1, 0:1, :1000, :1000])[0, 0, :5, :10])
-#print(component_coloring(a[0:1, 0:1, :1000, :1000])[0, 0, -5:, -5:])
-#print(component_coloring(b))
+a = torch.randn(1, 1, 1000, 1000).clamp(0, 1).round()
+b = torch.tensor([[[[1, 0, 1,],[1, 1, 1]]]]).to(torch.float)
+print(component_coloring(a)[0, 0, :5, :10])
+print(component_coloring(a)[0, 0, -5:, -5:])
+print(component_coloring(b))
+
