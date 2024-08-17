@@ -1,12 +1,12 @@
 import torch
-from ..impl.convert import to_luminance
-from ..impl.utils import gtf_min_max
+from gtf_impl import convert as C
+from gtf_impl.utils import gtf_min, gtf_max
 
 
 class Luminance:
     @staticmethod
     def INPUT_TYPES():
-        return { 
+        return {
             "required": {
                 "gtf": ("GTF", {}),
             },
@@ -19,7 +19,7 @@ class Luminance:
 
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
-        luminance = to_luminance(gtf)
+        luminance = C.to_luminance(gtf)
         return (luminance, )
 
 
@@ -27,19 +27,19 @@ class Min:
     @staticmethod
     def INPUT_TYPES():
         return {
-            "required": { 
-                "gtf": ("GTF", ), 
+            "required": {
+                "gtf": ("GTF", ),
             }
         }
 
     RETURN_TYPES = ("GTF", )
     RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/arithmetic"
+    CATEGORY = "gtf/convert"
     FUNCTION = "f"
 
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
-        tensor_min = gtf_min_max(gtf, (2, 3), False)
+        tensor_min = gtf_min(gtf, (2, 3))
         return (tensor_min, )
 
 
@@ -47,19 +47,19 @@ class Max:
     @staticmethod
     def INPUT_TYPES():
         return {
-            "required": { 
-                "gtf": ("GTF", ), 
+            "required": {
+                "gtf": ("GTF", ),
             }
         }
 
     RETURN_TYPES = ("GTF", )
     RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/arithmetic"
+    CATEGORY = "gtf/convert"
     FUNCTION = "f"
 
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
-        tensor_max = gtf_min_max(gtf, (2, 3), True)
+        tensor_max = gtf_max(gtf, (2, 3))
         return (tensor_max, )
 
 
@@ -67,19 +67,19 @@ class BatchMin:
     @staticmethod
     def INPUT_TYPES():
         return {
-            "required": { 
-                "gtf": ("GTF", ), 
+            "required": {
+                "gtf": ("GTF", ),
             }
         }
 
     RETURN_TYPES = ("GTF", )
     RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/arithmetic"
+    CATEGORY = "gtf/convert"
     FUNCTION = "f"
 
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
-        tensor_min = gtf_min_max(gtf, (0), False)
+        tensor_min = gtf_min(gtf, (0))
         return (tensor_min, )
 
 
@@ -87,19 +87,19 @@ class BatchMax:
     @staticmethod
     def INPUT_TYPES():
         return {
-            "required": { 
-                "gtf": ("GTF", ), 
+            "required": {
+                "gtf": ("GTF", ),
             }
         }
 
     RETURN_TYPES = ("GTF", )
     RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/arithmetic"
+    CATEGORY = "gtf/convert"
     FUNCTION = "f"
 
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
-        tensor_max = gtf_min_max(gtf, (0), True)
+        tensor_max = gtf_max(gtf, (0))
         return (tensor_max, )
 
 
@@ -107,19 +107,19 @@ class ChannelMin:
     @staticmethod
     def INPUT_TYPES():
         return {
-            "required": { 
-                "gtf": ("GTF", ), 
+            "required": {
+                "gtf": ("GTF", ),
             }
         }
 
     RETURN_TYPES = ("GTF", )
     RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/arithmetic"
+    CATEGORY = "gtf/convert"
     FUNCTION = "f"
 
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
-        tensor_min = gtf_min_max(gtf, (0), False)
+        tensor_min = gtf_min(gtf, (0))
         return (tensor_min, )
 
 
@@ -127,17 +127,17 @@ class ChannelMax:
     @staticmethod
     def INPUT_TYPES():
         return {
-            "required": { 
-                "gtf": ("GTF", ), 
+            "required": {
+                "gtf": ("GTF", ),
             }
         }
 
     RETURN_TYPES = ("GTF", )
     RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/arithmetic"
+    CATEGORY = "gtf/convert"
     FUNCTION = "f"
 
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
-        tensor_max = gtf_min_max(gtf, (0), True)
+        tensor_max = gtf_max(gtf, (0))
         return (tensor_max, )

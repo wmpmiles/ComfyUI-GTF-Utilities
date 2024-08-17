@@ -2,10 +2,10 @@ from copy import copy
 import torch
 
 
-class ImagesToGTF:
+class FromImages:
     @staticmethod
     def INPUT_TYPES():
-        return { 
+        return {
             "required": {
                 "images": ("IMAGE", {}),
             },
@@ -22,10 +22,10 @@ class ImagesToGTF:
         return (tensor, )
 
 
-class MasksToGTF:
+class FromMasks:
     @staticmethod
     def INPUT_TYPES():
-        return { 
+        return {
             "required": {
                 "masks": ("MASK", {}),
             },
@@ -42,10 +42,10 @@ class MasksToGTF:
         return (tensor, )
 
 
-class LatentsToGTF:
+class FromLatents:
     @staticmethod
     def INPUT_TYPES():
-        return { 
+        return {
             "required": {
                 "latents": ("LATENT", {}),
             },
@@ -62,10 +62,10 @@ class LatentsToGTF:
         return (tensor, )
 
 
-class GTFToImages:
+class ToImages:
     @staticmethod
     def INPUT_TYPES():
-        return { 
+        return {
             "required": {
                 "gtf": ("GTF", {}),
             },
@@ -78,14 +78,17 @@ class GTFToImages:
 
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
+        if gtf.shape[1] not in (3, 4):
+            raise ValueError("Can only convert 3 and 4 channel GTFs to \
+                images.")
         images = gtf.permute(0, 2, 3, 1)
         return (images, )
 
 
-class GTFToMasks:
+class ToMasks:
     @staticmethod
     def INPUT_TYPES():
-        return { 
+        return {
             "required": {
                 "gtf": ("GTF", {}),
             },
@@ -104,30 +107,10 @@ class GTFToMasks:
         return (masks, )
 
 
-class GTFToNewLatents:
+class UpdateLatents:
     @staticmethod
     def INPUT_TYPES():
-        return { 
-            "required": {
-                "gtf": ("GTF", {}),
-            },
-        }
-
-    RETURN_TYPES = ("LATENT", )
-    RETURN_NAMES = ("latents", )
-    CATEGORY = "gtf/interface"
-    FUNCTION = "f"
-
-    @staticmethod
-    def f(gtf: torch.Tensor) -> tuple[dict]:
-        latents = {"samples": gtf}
-        return (latents, )
-
-
-class GTFUpdateLatents:
-    @staticmethod
-    def INPUT_TYPES():
-        return { 
+        return {
             "required": {
                 "gtf": ("GTF", {}),
                 "latents": ("LATENT", {}),
@@ -141,6 +124,11 @@ class GTFUpdateLatents:
 
     @staticmethod
     def f(gtf: torch.Tensor, latents: dict[str, torch.Tensor]) -> tuple[dict]:
+        channels = gtf.shape[1]
+        expected_channels = latents["samples"].shape[1]
+        if channels != expected_channels:
+            raise ValueError(f"Expected GTF with {expected_channels} channels, \
+                but GTF had {channels} channels.")
         updated_latents = copy(latents)
         updated_latents["samples"] = gtf
         return (latents, )

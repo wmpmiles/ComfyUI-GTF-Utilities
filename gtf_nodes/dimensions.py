@@ -1,12 +1,12 @@
 from math import sqrt
 import torch
-from ..impl.utils import round_to_mult_of
+from gtf_impl.utils import round_to_mult_of
 
 
-class GTFDimensions:
+class FromGTF:
     @staticmethod
     def INPUT_TYPES():
-        return { 
+        return {
             "required": {
                 "gtf": ("GTF", {}),
             },
@@ -24,14 +24,18 @@ class GTFDimensions:
         return (dimensions, )
 
 
-class ScaleDimensions:
+class Scale:
     @staticmethod
     def INPUT_TYPES():
-        return { 
+        return {
             "required": {
                 "dimensions": ("DIM", {}),
-                "scale_width": ("FLOAT", { "default": 1.0, "min": 0, "step": 0.001 }),
-                "scale_height": ("FLOAT", { "default": 1.0, "min": 0, "step": 0.001 }),
+                "scale_width": ("FLOAT", {
+                    "default": 1.0, "min": 0, "step": 0.001
+                }),
+                "scale_height": ("FLOAT", {
+                    "default": 1.0, "min": 0, "step": 0.001
+                }),
             },
         }
 
@@ -41,20 +45,26 @@ class ScaleDimensions:
     FUNCTION = "f"
 
     @staticmethod
-    def f(dimensions: tuple[int, int], scale_width: float, scale_height: float) -> tuple[tuple[int, int]]:
+    def f(
+        dimensions: tuple[int, int],
+        scale_width: float,
+        scale_height: float
+    ) -> tuple[tuple[int, int]]:
         width, height = dimensions
         new_width = int(width * scale_width)
         new_height = int(height * scale_height)
         return ((new_width, new_height), )
 
 
-class ScaleDimensionsToMegapixels:
+class ScaleToMegapixels:
     @staticmethod
     def INPUT_TYPES():
-        return { 
+        return {
             "required": {
                 "dimensions": ("DIM", {}),
-                "megapixels": ("FLOAT", { "default": 1.0, "min": 0, "step": 0.001 }),
+                "megapixels": ("FLOAT", {
+                    "default": 1.0, "min": 0, "step": 0.001
+                }),
             },
         }
 
@@ -63,9 +73,11 @@ class ScaleDimensionsToMegapixels:
     CATEGORY = "gtf/dimensions"
     FUNCTION = "f"
 
-
     @staticmethod
-    def f(dimensions: tuple[int, int], megapixels: float) -> tuple[tuple[int, int]]:
+    def f(
+        dimensions: tuple[int, int],
+        megapixels: float
+    ) -> tuple[tuple[int, int]]:
         width, height = dimensions
         curr_megapixels = (width * height) / 1_000_000
         scale = sqrt(megapixels / curr_megapixels)
@@ -73,14 +85,14 @@ class ScaleDimensionsToMegapixels:
         return (dimensions, )
 
 
-class ChangeDimensions:
+class Change:
     @staticmethod
     def INPUT_TYPES():
-        return { 
+        return {
             "required": {
                 "dimensions": ("DIM", {}),
-                "delta_width": ("INT", { "default": 0 }),
-                "delta_height": ("INT", { "default": 0 }),
+                "delta_width": ("INT", {"default": 0}),
+                "delta_height": ("INT", {"default": 0}),
             },
         }
 
@@ -90,20 +102,24 @@ class ChangeDimensions:
     FUNCTION = "f"
 
     @staticmethod
-    def f(dimensions: tuple[int, int], delta_width: int, delta_height: int) -> tuple[tuple[int, int]]:
+    def f(
+        dimensions: tuple[int, int],
+        delta_width: int,
+        delta_height: int
+    ) -> tuple[tuple[int, int]]:
         width, height = dimensions
         new_width = width + delta_width
         new_height = height + delta_height
         return ((new_width, new_height), )
 
 
-class DimensionsAlignTo:
+class AlignTo:
     @staticmethod
     def INPUT_TYPES():
-        return { 
+        return {
             "required": {
                 "dimensions": ("DIM", {}),
-                "align_to": ("INT", { "default": 8, "min": 1 }),
+                "align_to": ("INT", {"default": 8, "min": 1}),
             },
         }
 
@@ -113,20 +129,23 @@ class DimensionsAlignTo:
     FUNCTION = "f"
 
     @staticmethod
-    def f(dimensions: tuple[int, int], align_to: int) -> tuple[tuple[int, int]]:
+    def f(
+        dimensions: tuple[int, int],
+        align_to: int
+    ) -> tuple[tuple[int, int]]:
         width, height = dimensions
         new_width = round_to_mult_of(width, align_to)
         new_height = round_to_mult_of(height, align_to)
         return ((new_width, new_height), )
 
 
-class DimensionsFromRaw:
+class FromRaw:
     @staticmethod
     def INPUT_TYPES():
-        return { 
+        return {
             "required": {
-                "width": ("INT", { "default": 1024, "min": 1 }),
-                "height": ("INT", { "default": 1024, "min": 1 }),
+                "width": ("INT", {"default": 1024, "min": 1}),
+                "height": ("INT", {"default": 1024, "min": 1}),
             },
         }
 
@@ -140,10 +159,10 @@ class DimensionsFromRaw:
         return ((width, height), )
 
 
-class DimensionsToRaw:
+class ToRaw:
     @staticmethod
     def INPUT_TYPES():
-        return { 
+        return {
             "required": {
                 "dimensions": ("DIM", {}),
             },

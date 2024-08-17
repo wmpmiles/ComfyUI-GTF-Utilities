@@ -1,12 +1,18 @@
 import torch
-from ..impl.resample import nearest_neighbor_resample_2d, filter_resample_2d, \
-    filter_resample_2d_seperable, area_resample_2d, triangle_filter, \
-    lanczos_filter, mitchell_netravali_filter, mitchell_netravali_radius
+from gtf_impl import resample as R
 
-class ResampleNearestNeighbor:
+
+def select_fn(seperable: bool):
+    if seperable:
+        return R.filter_2d_seperable
+    else:
+        return R.filter_2d
+
+
+class NearestNeighbor:
     @classmethod
     def INPUT_TYPES(s):
-        return { 
+        return {
             "required": {
                 "gtf": ("GTF", {}),
                 "dimensions": ("DIM", {}),
@@ -20,23 +26,24 @@ class ResampleNearestNeighbor:
 
     @staticmethod
     def f(
-        gtf: torch.Tensor, 
+        gtf: torch.Tensor,
         dimensions: tuple[int, int],
     ) -> tuple[torch.Tensor]:
         width, height = dimensions
-        resampled = nearest_neighbor_resample_2d(gtf, (height, width), (2, 3))
+        resampled = \
+            R.nearest_neighbor_2d(gtf, (height, width), (2, 3))
         return (resampled, )
 
 
-class ResampleTriangle:
+class Triangle:
     @classmethod
     def INPUT_TYPES(s):
-        return { 
+        return {
             "required": {
                 "gtf": ("GTF", {}),
                 "dimensions": ("DIM", {}),
-                "radius": ("INT", { "default": 1, "min": 1 }),
-                "seperable": ("BOOLEAN", { "default": True }),
+                "radius": ("INT", {"default": 1, "min": 1}),
+                "seperable": ("BOOLEAN", {"default": True}),
             },
         }
 
@@ -47,27 +54,27 @@ class ResampleTriangle:
 
     @staticmethod
     def f(
-        gtf: torch.Tensor, 
-        dimensions: tuple[int, int], 
-        radius: int, 
+        gtf: torch.Tensor,
+        dimensions: tuple[int, int],
+        radius: int,
         seperable: bool,
     ) -> tuple[torch.Tensor]:
         width, height = dimensions
-        filter = triangle_filter(radius)
-        fn = filter_resample_2d_seperable if seperable else filter_resample_2d
+        filter = R.triangle_filter(radius)
+        fn = select_fn(seperable)
         resampled = fn(gtf, (height, width), radius, filter, (2, 3))
         return (resampled, )
 
 
-class ResampleLanczos:
+class Lanczos:
     @classmethod
     def INPUT_TYPES(s):
-        return { 
+        return {
             "required": {
                 "gtf": ("GTF", {}),
                 "dimensions": ("DIM", {}),
-                "radius": ("INT", { "default": 4, "min": 1 }),
-                "seperable": ("BOOLEAN", { "default": True }),
+                "radius": ("INT", {"default": 4, "min": 1}),
+                "seperable": ("BOOLEAN", {"default": True}),
             },
         }
 
@@ -78,30 +85,30 @@ class ResampleLanczos:
 
     @staticmethod
     def f(
-        gtf: torch.Tensor, 
-        dimensions: tuple[int, int], 
-        radius: int, 
+        gtf: torch.Tensor,
+        dimensions: tuple[int, int],
+        radius: int,
         seperable: bool,
     ) -> tuple[torch.Tensor]:
         width, height = dimensions
-        filter = lanczos_filter(radius)
-        fn = filter_resample_2d_seperable if seperable else filter_resample_2d
+        filter = R.lanczos_filter(radius)
+        fn = select_fn(seperable)
         resampled = fn(gtf, (height, width), radius, filter, (2, 3))
         return (resampled, )
 
 
-class ResampleMitchellNetravali:
+class MitchellNetravali:
     @classmethod
     def INPUT_TYPES(s):
-        return { 
+        return {
             "required": {
                 "gtf": ("GTF", {}),
                 "dimensions": ("DIM", {}),
-                "b": ("FLOAT", 
-                        { "default": 0.33, "min": 0, "max": 1, "step": 0.01 }),
-                "c": ("FLOAT", 
-                        { "default": 0.33, "min": 0, "max": 1, "step": 0.01 }),
-                "seperable": ("BOOLEAN", { "default": True }),
+                "b": ("FLOAT",
+                      {"default": 0.33, "min": 0, "max": 1, "step": 0.01}),
+                "c": ("FLOAT",
+                      {"default": 0.33, "min": 0, "max": 1, "step": 0.01}),
+                "seperable": ("BOOLEAN", {"default": True}),
             },
         }
 
@@ -112,24 +119,24 @@ class ResampleMitchellNetravali:
 
     @staticmethod
     def f(
-        gtf: torch.Tensor, 
-        dimensions: tuple[int, int], 
-        b: float, 
-        c: float, 
+        gtf: torch.Tensor,
+        dimensions: tuple[int, int],
+        b: float,
+        c: float,
         seperable: bool
     ) -> tuple[torch.Tensor]:
         width, height = dimensions
-        filter = mitchell_netravali_filter(b, c)
-        fn = filter_resample_2d_seperable if seperable else filter_resample_2d
-        radius = mitchell_netravali_radius()
+        filter = R.mitchell_netravali_filter(b, c)
+        fn = select_fn(seperable)
+        radius = R.mitchell_netravali_radius()
         resampled = fn(gtf, (height, width), radius, filter, (2, 3))
         return (resampled, )
 
 
-class ResampleArea:
+class Area:
     @classmethod
     def INPUT_TYPES(s):
-        return { 
+        return {
             "required": {
                 "gtf": ("GTF", {}),
                 "dimensions": ("DIM", {}),
@@ -143,9 +150,9 @@ class ResampleArea:
 
     @staticmethod
     def f(
-        gtf: torch.Tensor, 
+        gtf: torch.Tensor,
         dimensions: tuple[int, int]
     ) -> tuple[torch.Tensor]:
         width, height = dimensions
-        resampled = area_resample_2d(gtf, (height, width), (2, 3))
+        resampled = R.area_2d(gtf, (height, width), (2, 3))
         return (resampled, )

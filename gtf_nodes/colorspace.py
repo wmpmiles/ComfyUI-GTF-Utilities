@@ -1,11 +1,11 @@
 import torch
-from ..impl.colorspace import srgb_gamma_to_linear, srgb_linear_to_gamma
+from gtf_impl import colorspace as cs
 
 
-class ColorspaceSRGBGammaToLinear:
+class SRGBGammaToLinear:
     @staticmethod
     def INPUT_TYPES():
-        return { 
+        return {
             "required": {
                 "gtf": ("GTF", {}),
             },
@@ -18,14 +18,14 @@ class ColorspaceSRGBGammaToLinear:
 
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
-        linear = srgb_gamma_to_linear(gtf)
+        linear = cs.srgb_gamma_to_linear(gtf)
         return (linear, )
 
 
-class ColorspaceSRGBLinearToGamma:
+class SRGBLinearToGamma:
     @staticmethod
     def INPUT_TYPES():
-        return { 
+        return {
             "required": {
                 "gtf": ("GTF", {}),
             },
@@ -38,5 +38,5 @@ class ColorspaceSRGBLinearToGamma:
 
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
-        gamma = srgb_linear_to_gamma(gtf)
+        gamma = cs.srgb_linear_to_gamma(gtf)
         return (gamma, )

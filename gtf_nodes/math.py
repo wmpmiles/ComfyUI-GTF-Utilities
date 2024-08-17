@@ -5,15 +5,15 @@ class Add:
     @staticmethod
     def INPUT_TYPES():
         return {
-            "required": { 
-                "gtf_a": ("GTF", ), 
-                "gtf_b": ("GTF", ), 
+            "required": {
+                "gtf_a": ("GTF", ),
+                "gtf_b": ("GTF", ),
             }
         }
 
     RETURN_TYPES = ("GTF", )
     RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/arithmetic"
+    CATEGORY = "gtf/math"
     FUNCTION = "f"
 
     @staticmethod
@@ -26,15 +26,15 @@ class Multiply:
     @staticmethod
     def INPUT_TYPES():
         return {
-            "required": { 
-                "gtf_a": ("GTF", ), 
-                "gtf_b": ("GTF", ), 
+            "required": {
+                "gtf_a": ("GTF", ),
+                "gtf_b": ("GTF", ),
             }
         }
 
     RETURN_TYPES = ("GTF", )
     RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/arithmetic"
+    CATEGORY = "gtf/math"
     FUNCTION = "f"
 
     @staticmethod
@@ -47,14 +47,14 @@ class Reciprocal:
     @staticmethod
     def INPUT_TYPES():
         return {
-            "required": { 
-                "gtf": ("GTF", ), 
+            "required": {
+                "gtf": ("GTF", ),
             }
         }
 
     RETURN_TYPES = ("GTF", )
     RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/arithmetic"
+    CATEGORY = "gtf/math"
     FUNCTION = "f"
 
     @staticmethod
@@ -67,14 +67,14 @@ class Negate:
     @staticmethod
     def INPUT_TYPES():
         return {
-            "required": { 
-                "gtf": ("GTF", ), 
+            "required": {
+                "gtf": ("GTF", ),
             }
         }
 
     RETURN_TYPES = ("GTF", )
     RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/arithmetic"
+    CATEGORY = "gtf/math"
     FUNCTION = "f"
 
     @staticmethod
@@ -92,7 +92,7 @@ class Zero:
 
     RETURN_TYPES = ("GTF", )
     RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/arithmetic"
+    CATEGORY = "gtf/math"
     FUNCTION = "f"
 
     @staticmethod
@@ -110,7 +110,7 @@ class One:
 
     RETURN_TYPES = ("GTF", )
     RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/arithmetic"
+    CATEGORY = "gtf/math"
     FUNCTION = "f"
 
     @staticmethod
@@ -130,7 +130,7 @@ class Float:
 
     RETURN_TYPES = ("GTF", )
     RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/arithmetic"
+    CATEGORY = "gtf/math"
     FUNCTION = "f"
 
     @staticmethod
@@ -138,3 +138,52 @@ class Float:
         value_tensor = torch.tensor(value).reshape(1, 1, 1, 1)
         return (value_tensor, )
 
+
+class Lerp:
+    @staticmethod
+    def INPUT_TYPES():
+        return {
+            "required": {
+                "gtf_0": ("GTF", ),
+                "gtf_1": ("GTF", ),
+                "t": ("FLOAT", {"default": 0.5})
+            }
+        }
+
+    RETURN_TYPES = ("GTF", )
+    RETURN_NAMES = ("gtf", )
+    CATEGORY = "gtf/math"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(
+        gtf_0: torch.Tensor,
+        gtf_1: torch.Tensor,
+        t: float
+    ) -> tuple[torch.Tensor]:
+        lerped = torch.lerp(gtf0, gtf_1, t)
+        return (lerped, )
+
+
+class Pow:
+    @staticmethod
+    def INPUT_TYPES():
+        return {
+            "required": {
+                "gtf_base": ("GTF", ),
+                "gtf_exp": ("GTF", ),
+            }
+        }
+
+    RETURN_TYPES = ("GTF", )
+    RETURN_NAMES = ("gtf", )
+    CATEGORY = "gtf/math"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(
+        gtf_base: torch.Tensor,
+        gtf_exp: torch.Tensor,
+    ) -> tuple[torch.Tensor]:
+        powed = gtf_base.pow(gtf_exp)
+        return (powed, )

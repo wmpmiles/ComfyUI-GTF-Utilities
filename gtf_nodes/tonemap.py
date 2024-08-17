@@ -1,11 +1,11 @@
 import torch
-from ..impl.tonemap import *
+from gtf_impl import tonemap as TM
 
 
-class TonemapReinhard:
+class Reinhard:
     @staticmethod
     def INPUT_TYPES():
-        return { 
+        return {
             "required": {
                 "gtf": ("GTF", {}),
             },
@@ -18,14 +18,14 @@ class TonemapReinhard:
 
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
-        tonemapped = tonemap_reinhard(gtf)
+        tonemapped = TM.reinhard(gtf)
         return (tonemapped, )
 
 
-class TonemapReinhardExtended:
+class ReinhardExtended:
     @staticmethod
     def INPUT_TYPES():
-        return { 
+        return {
             "required": {
                 "gtf": ("GTF", {}),
                 "gtf_whitepoint": ("GTF", {}),
@@ -39,17 +39,17 @@ class TonemapReinhardExtended:
 
     @staticmethod
     def f(
-        gtf: torch.Tensor, 
+        gtf: torch.Tensor,
         gtf_whitepoint: torch.Tensor
     ) -> tuple[torch.Tensor]:
-        tonemapped = tonemap_reinhard_extended(gtf, gtf_whitepoint)
+        tonemapped = TM.reinhard_extended(gtf, gtf_whitepoint)
         return (tonemapped, )
 
 
-class TonemapReinhardLuminance:
+class ReinhardLuminance:
     @staticmethod
     def INPUT_TYPES():
-        return { 
+        return {
             "required": {
                 "gtf": ("GTF", {}),
                 "luminance": ("GTF", {}),
@@ -63,17 +63,17 @@ class TonemapReinhardLuminance:
 
     @staticmethod
     def f(
-        gtf: torch.Tensor, 
+        gtf: torch.Tensor,
         gtf_luminance: torch.Tensor,
     ) -> tuple[torch.Tensor]:
-        tonemapped = tonemap_reinhard_luminance(gtf, gtf_luminance)
+        tonemapped = TM.reinhard_luminance(gtf, gtf_luminance)
         return (tonemapped, )
 
 
-class TonemapReinhardExtendedLuminance:
+class ReinhardExtendedLuminance:
     @staticmethod
     def INPUT_TYPES():
-        return { 
+        return {
             "required": {
                 "gtf": ("GTF", {}),
                 "gtf_luminance": ("GTF", {}),
@@ -88,22 +88,22 @@ class TonemapReinhardExtendedLuminance:
 
     @staticmethod
     def f(
-        gtf: torch.Tensor, 
-        gtf_luminance: torch.Tensor, 
-        gtf_whitepoint: torch.Tensor, 
+        gtf: torch.Tensor,
+        gtf_luminance: torch.Tensor,
+        gtf_whitepoint: torch.Tensor,
     ) -> tuple[torch.Tensor]:
-        tonemapped = tonemap_reinhard_extended_luminance(
-            gtf, 
-            gtf_luminance, 
+        tonemapped = TM.reinhard_extended_luminance(
+            gtf,
+            gtf_luminance,
             gtf_whitepoint,
         )
         return (tonemapped, )
 
 
-class TonemapReinhardJodie:
+class ReinhardJodie:
     @staticmethod
     def INPUT_TYPES():
-        return { 
+        return {
             "required": {
                 "gtf": ("GTF", {}),
                 "luminance": ("GTF", {}),
@@ -117,17 +117,17 @@ class TonemapReinhardJodie:
 
     @staticmethod
     def f(
-        gtf: torch.Tensor, 
+        gtf: torch.Tensor,
         gtf_luminance: torch.Tensor
     ) -> tuple[torch.Tensor]:
-        tonemapped = tonemap_reinhard_jodie(gtf, gtf_luminance)
+        tonemapped = TM.reinhard_jodie(gtf, gtf_luminance)
         return (tonemapped, )
 
 
-class TonemapReinhardJodieExtended:
+class ReinhardJodieExtended:
     @staticmethod
     def INPUT_TYPES():
-        return { 
+        return {
             "required": {
                 "gtf": ("GTF", {}),
                 "gtf_luminance": ("GTF", {}),
@@ -142,22 +142,22 @@ class TonemapReinhardJodieExtended:
 
     @staticmethod
     def f(
-        gtf: torch.Tensor, 
-        gtf_luminance: torch.Tensor, 
-        gtf_whitepoint: torch.Tensor, 
+        gtf: torch.Tensor,
+        gtf_luminance: torch.Tensor,
+        gtf_whitepoint: torch.Tensor,
     ) -> tuple[torch.Tensor]:
-        tonemapped = tonemap_reinhard_jodie_extended(
-            gtf, 
-            gtf_luminance, 
+        tonemapped = TM.reinhard_jodie_extended(
+            gtf,
+            gtf_luminance,
             gtf_whitepoint
         )
         return (tonemapped, )
 
 
-class TonemapUncharted2:
+class Uncharted2:
     @staticmethod
     def INPUT_TYPES():
-        return { 
+        return {
             "required": {
                 "gtf": ("GTF", {}),
             },
@@ -170,14 +170,14 @@ class TonemapUncharted2:
 
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
-        tonemapped = tonemap_uncharted_2(gtf)
+        tonemapped = TM.uncharted_2(gtf)
         return (tonemapped, )
 
 
-class TonemapACES:
+class ACES:
     @staticmethod
     def INPUT_TYPES():
-        return { 
+        return {
             "required": {
                 "gtf": ("GTF", {}),
             },
@@ -190,6 +190,5 @@ class TonemapACES:
 
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
-        tonemapped = tonemap_aces(gtf)
+        tonemapped = TM.aces(gtf)
         return (tonemapped, )
-
