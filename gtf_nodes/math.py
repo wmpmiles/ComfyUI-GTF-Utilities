@@ -6,8 +6,8 @@ class Add:
     def INPUT_TYPES():
         return {
             "required": {
-                "gtf_a": ("GTF", ),
-                "gtf_b": ("GTF", ),
+                "gtf_lhs": ("GTF", ),
+                "gtf_rhs": ("GTF", ),
             }
         }
 
@@ -17,9 +17,30 @@ class Add:
     FUNCTION = "f"
 
     @staticmethod
-    def f(gtf_a: torch.Tensor, gtf_b: torch.Tensor) -> tuple[torch.Tensor]:
-        added = gtf_a + gtf_b
+    def f(gtf_lhs: torch.Tensor, gtf_rhs: torch.Tensor) -> tuple[torch.Tensor]:
+        added = gtf_lhs + gtf_rhs
         return (added, )
+
+
+class Subtract:
+    @staticmethod
+    def INPUT_TYPES():
+        return {
+            "required": {
+                "gtf_lhs": ("GTF", ),
+                "gtf_rhs": ("GTF", ),
+            }
+        }
+
+    RETURN_TYPES = ("GTF", )
+    RETURN_NAMES = ("gtf", )
+    CATEGORY = "gtf/math"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(gtf_lhs: torch.Tensor, gtf_rhs: torch.Tensor) -> tuple[torch.Tensor]:
+        subtracted = gtf_lhs - gtf_rhs
+        return (subtracted, )
 
 
 class Multiply:
@@ -27,8 +48,8 @@ class Multiply:
     def INPUT_TYPES():
         return {
             "required": {
-                "gtf_a": ("GTF", ),
-                "gtf_b": ("GTF", ),
+                "gtf_lhs": ("GTF", ),
+                "gtf_rhs": ("GTF", ),
             }
         }
 
@@ -38,9 +59,30 @@ class Multiply:
     FUNCTION = "f"
 
     @staticmethod
-    def f(gtf_a: torch.Tensor, gtf_b: torch.Tensor) -> tuple[torch.Tensor]:
-        multiplied = gtf_a * gtf_b
+    def f(gtf_lhs: torch.Tensor, gtf_rhs: torch.Tensor) -> tuple[torch.Tensor]:
+        multiplied = gtf_lhs * gtf_rhs
         return (multiplied, )
+
+
+class Divide:
+    @staticmethod
+    def INPUT_TYPES():
+        return {
+            "required": {
+                "gtf_lhs": ("GTF", ),
+                "gtf_rhs": ("GTF", ),
+            }
+        }
+
+    RETURN_TYPES = ("GTF", )
+    RETURN_NAMES = ("gtf", )
+    CATEGORY = "gtf/math"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(gtf_lhs: torch.Tensor, gtf_rhs: torch.Tensor) -> tuple[torch.Tensor]:
+        divided = gtf_lhs / gtf_rhs
+        return (divided, )
 
 
 class Reciprocal:
@@ -83,62 +125,6 @@ class Negate:
         return (negated, )
 
 
-class Zero:
-    @staticmethod
-    def INPUT_TYPES():
-        return {
-            "required": {}
-        }
-
-    RETURN_TYPES = ("GTF", )
-    RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/math"
-    FUNCTION = "f"
-
-    @staticmethod
-    def f() -> tuple[torch.Tensor]:
-        zero = torch.zeros(1, 1, 1, 1)
-        return (zero, )
-
-
-class One:
-    @staticmethod
-    def INPUT_TYPES():
-        return {
-            "required": {}
-        }
-
-    RETURN_TYPES = ("GTF", )
-    RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/math"
-    FUNCTION = "f"
-
-    @staticmethod
-    def f() -> tuple[torch.Tensor]:
-        one = torch.ones(1, 1, 1, 1)
-        return (one, )
-
-
-class Float:
-    @staticmethod
-    def INPUT_TYPES():
-        return {
-            "required": {
-                "value": ("FLOAT", {"default": 0.0})
-            }
-        }
-
-    RETURN_TYPES = ("GTF", )
-    RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/math"
-    FUNCTION = "f"
-
-    @staticmethod
-    def f(value: float) -> tuple[torch.Tensor]:
-        value_tensor = torch.tensor(value).reshape(1, 1, 1, 1)
-        return (value_tensor, )
-
-
 class Lerp:
     @staticmethod
     def INPUT_TYPES():
@@ -146,7 +132,7 @@ class Lerp:
             "required": {
                 "gtf_0": ("GTF", ),
                 "gtf_1": ("GTF", ),
-                "t": ("FLOAT", {"default": 0.5})
+                "t": ("FLOAT", {"default": 0.5, "step": 0.01})
             }
         }
 
@@ -161,7 +147,7 @@ class Lerp:
         gtf_1: torch.Tensor,
         t: float
     ) -> tuple[torch.Tensor]:
-        lerped = torch.lerp(gtf0, gtf_1, t)
+        lerped = torch.lerp(gtf_0, gtf_1, t)
         return (lerped, )
 
 

@@ -131,4 +131,4 @@ class UpdateLatents:
                 but GTF had {channels} channels.")
         updated_latents = copy(latents)
         updated_latents["samples"] = gtf
-        return (latents, )
+        return (updated_latents, )

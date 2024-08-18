@@ -10,7 +10,7 @@ from pathlib import Path
 package_path = Path(__file__).resolve().parent
 sys.path += [str(package_path)]
 from gtf_nodes import interface, bbox, resample, dimensions, colorspace, \
-    filter, math, transform, tonemap, convert  # noqa: E402
+    filter, math, source, transform, tonemap, convert, grading  # noqa: E402
 sys.path = sys.path[:-1]
 
 
@@ -34,6 +34,8 @@ NODE_CLASS_MAPPINGS = {
     # Colorspace
     "GTF | Colorspace - SRGB Linear to Gamma": colorspace.SRGBLinearToGamma,
     "GTF | Colorspace - SRGB Gamma to Linear": colorspace.SRGBGammaToLinear,
+    "GTF | Colorspace - Linear to Log":        colorspace.LinearToLog,
+    "GTF | Colorspace - Log to Linear":        colorspace.LogToLinear,
     # Transform
     "GTF | Transform - Crop/Uncrop with Anchor": transform.CropUncropRelative,
     "GTF | Transform - Batch":                   transform.Batch,
@@ -42,16 +44,20 @@ NODE_CLASS_MAPPINGS = {
     "GTF | Transform - Connected Components":    transform.ConnectedComponents,
     "GTF | Transform - 1 Channel to 3":          transform.Channels1To3Repeat,
     "GTF | Transform - 1 Channel to 4":          transform.Channels1To4Repeat,
-    # Arithmetic
-    "GTF | Math - Zero":       math.Zero,
-    "GTF | Math - One":        math.One,
-    "GTF | Math - Float":      math.Float,
+    # Math
     "GTF | Math - Add":        math.Add,
+    "GTF | Math - Subtract":   math.Subtract,
     "GTF | Math - Multiply":   math.Multiply,
+    "GTF | Math - Divide":     math.Divide,
     "GTF | Math - Reciprocal": math.Reciprocal,
     "GTF | Math - Negative":   math.Negate,
     "GTF | Math - Lerp":       math.Lerp,
     "GTF | Math - Pow":        math.Pow,
+    # Source
+    "GTF | Source - Zero":  source.Zero,
+    "GTF | Source - One":   source.One,
+    "GTF | Source - Value": source.Value,
+    "GTF | Source - RGB":   source.RGB,
     # Tonemap
     "GTF | Tonemap - Reinhard":                tonemap.Reinhard,
     "GTF | Tonemap - Reinhard Extended":       tonemap.ReinhardExtended,

@@ -21,3 +21,13 @@ def srgb_linear_to_gamma(tensor: torch.Tensor):
     piece_hi = (1 + a) * torch.pow(tensor, 1/2.4) - a
     tensor = torch.where(tensor <= 0.0031308, piece_lo, piece_hi)
     return tensor
+
+
+def linear_to_log(tensor: torch.Tensor, eps: float) -> torch.Tensor:
+    log = torch.log2(tensor + eps)
+    return log
+
+
+def log_to_linear(tensor: torch.Tensor, eps: float) -> torch.Tensor:
+    linear = torch.exp2(tensor) - eps
+    return linear
