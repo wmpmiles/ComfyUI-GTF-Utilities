@@ -173,3 +173,51 @@ class Pow:
     ) -> tuple[torch.Tensor]:
         powed = gtf_base.pow(gtf_exp)
         return (powed, )
+
+
+class Equal:
+    @staticmethod
+    def INPUT_TYPES():
+        return {
+            "required": {
+                "gtf_a": ("GTF", ),
+                "gtf_b": ("GTF", ),
+            }
+        }
+
+    RETURN_TYPES = ("GTF", )
+    RETURN_NAMES = ("gtf", )
+    CATEGORY = "gtf/math"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(
+        gtf_a: torch.Tensor,
+        gtf_b: torch.Tensor,
+    ) -> tuple[torch.Tensor]:
+        equal = (gtf_a == gtf_b).to(torch.float)
+        return (equal, )
+
+
+class LessThan:
+    @staticmethod
+    def INPUT_TYPES():
+        return {
+            "required": {
+                "gtf_a": ("GTF", ),
+                "gtf_b": ("GTF", ),
+            }
+        }
+
+    RETURN_TYPES = ("GTF", )
+    RETURN_NAMES = ("gtf", )
+    CATEGORY = "gtf/math"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(
+        gtf_a: torch.Tensor,
+        gtf_b: torch.Tensor,
+    ) -> tuple[torch.Tensor]:
+        less_than = (gtf_a < gtf_b).to(torch.float)
+        return (less_than, )

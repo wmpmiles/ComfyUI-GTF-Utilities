@@ -36,6 +36,10 @@ NODE_CLASS_MAPPINGS = {
     "GTF | Colorspace - SRGB Gamma to Linear": colorspace.SRGBGammaToLinear,
     "GTF | Colorspace - Linear to Log":        colorspace.LinearToLog,
     "GTF | Colorspace - Log to Linear":        colorspace.LogToLinear,
+    "GTF | Colorspace - Standard Linear to Gamma": 
+    colorspace.StandardLinearToGamma,
+    "GTF | Colorspace - Standard Gamma to Linear": 
+    colorspace.StandardGammaToLinear,
     # Transform
     "GTF | Transform - Crop/Uncrop with Anchor": transform.CropUncropRelative,
     "GTF | Transform - Batch":                   transform.Batch,
@@ -53,6 +57,8 @@ NODE_CLASS_MAPPINGS = {
     "GTF | Math - Negative":   math.Negate,
     "GTF | Math - Lerp":       math.Lerp,
     "GTF | Math - Pow":        math.Pow,
+    "GTF | Math - Equal":      math.Equal,
+    "GTF | Math - Less Than":  math.LessThan,
     # Source
     "GTF | Source - Zero":  source.Zero,
     "GTF | Source - One":   source.One,

@@ -80,3 +80,43 @@ class LogToLinear:
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
         linear = cs.log_to_linear(gtf, 0.0001)
         return (linear, )
+
+
+class StandardGammaToLinear:
+    @staticmethod
+    def INPUT_TYPES():
+        return {
+            "required": {
+                "gtf": ("GTF", {}),
+            },
+        }
+
+    RETURN_TYPES = ("GTF", )
+    RETURN_NAMES = ("gtf", )
+    CATEGORY = "gtf/colorspace"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
+        linear = cs.standard_gamma_to_linear(gtf)
+        return (linear, )
+
+
+class StandardLinearToGamma:
+    @staticmethod
+    def INPUT_TYPES():
+        return {
+            "required": {
+                "gtf": ("GTF", {}),
+            },
+        }
+
+    RETURN_TYPES = ("GTF", )
+    RETURN_NAMES = ("gtf", )
+    CATEGORY = "gtf/colorspace"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
+        linear = cs.standard_linear_to_gamma(gtf)
+        return (linear, )
