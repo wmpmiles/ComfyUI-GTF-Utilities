@@ -141,3 +141,24 @@ class ChannelMax:
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
         tensor_max = gtf_max(gtf, (0))
         return (tensor_max, )
+
+
+class BinaryThreshold:
+    @staticmethod
+    def INPUT_TYPES():
+        return {
+            "required": {
+                "gtf": ("GTF", ),
+                "threshold": ("FLOAT", {"default": 0.5, "step": 0.001}),
+            }
+        }
+
+    RETURN_TYPES = ("GTF", )
+    RETURN_NAMES = ("gtf", )
+    CATEGORY = "gtf/convert"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(gtf: torch.Tensor, threshold: float) -> tuple[torch.Tensor]:
+        thresholded = (gtf >= threshold).to(torch.float)
+        return (thresholded, )
