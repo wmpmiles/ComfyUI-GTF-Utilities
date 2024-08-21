@@ -52,7 +52,7 @@ def reinhard_jodie_extended(
 ) -> torch.Tensor:
     t_reinhard = reinhard_extended(tensor, whitepoint)
     t_reinhard_luminance = \
-        reinhard_luminance(tensor, luminance, whitepoint)
+        reinhard_extended_luminance(tensor, luminance, whitepoint)
     lerped = torch.lerp(t_reinhard_luminance, t_reinhard, t_reinhard)
     return lerped
 

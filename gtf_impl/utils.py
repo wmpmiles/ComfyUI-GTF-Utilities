@@ -10,15 +10,15 @@ def round_to_mult_of(number: int, mult_of: int) -> int:
 def gtf_min_max_f(
     is_max: bool,
 ) -> torch.Tensor:
-    f = torch.amax if is_max else torch.amin
+    f1 = torch.amax if is_max else torch.amin
 
-    def f(tensor: torch.Tensor, dims: Iterable[int]) -> torch.Tensor:
+    def f2(tensor: torch.Tensor, dims: Iterable[int]) -> torch.Tensor:
         curr = tensor
         for dim in dims:
-            curr = f(curr, dim, True)
+            curr = f1(curr, dim, True)
         return curr
 
-    return f
+    return f2
 
 
 gtf_min = gtf_min_max_f(False)

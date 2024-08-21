@@ -42,7 +42,12 @@ class Value:
     def INPUT_TYPES():
         return {
             "required": {
-                "value": ("FLOAT", {"default": 0.0, "step": 0.01})
+                "value": ("FLOAT", {
+                    "default": 0.0,
+                    "step": 0.0001,
+                    "min": -1_000_000,
+                    "max": 1_000_000,
+                })
             }
         }
 

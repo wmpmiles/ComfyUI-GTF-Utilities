@@ -10,7 +10,7 @@ from pathlib import Path
 package_path = Path(__file__).resolve().parent
 sys.path += [str(package_path)]
 from gtf_nodes import interface, bbox, resample, dimensions, colorspace, \
-    filter, math, source, transform, tonemap, convert, grading  # noqa: E402
+    filter, math, source, transform, tonemap, convert, primitive  # noqa: E402
 sys.path = sys.path[:-1]
 
 
@@ -36,9 +36,9 @@ NODE_CLASS_MAPPINGS = {
     "GTF | Colorspace - SRGB Gamma to Linear": colorspace.SRGBGammaToLinear,
     "GTF | Colorspace - Linear to Log":        colorspace.LinearToLog,
     "GTF | Colorspace - Log to Linear":        colorspace.LogToLinear,
-    "GTF | Colorspace - Standard Linear to Gamma": 
+    "GTF | Colorspace - Standard Linear to Gamma":
     colorspace.StandardLinearToGamma,
-    "GTF | Colorspace - Standard Gamma to Linear": 
+    "GTF | Colorspace - Standard Gamma to Linear":
     colorspace.StandardGammaToLinear,
     # Transform
     "GTF | Transform - Crop/Uncrop with Anchor": transform.CropUncropRelative,
@@ -95,6 +95,11 @@ NODE_CLASS_MAPPINGS = {
     "Dimensions | From Raw":            dimensions.FromRaw,
     "Dimensions | To Raw":              dimensions.ToRaw,
     "Dimensions | From GTF":            dimensions.FromGTF,
+    # Primitive
+    "Primitive | Integer": primitive.Integer,
+    "Primitive | Float":   primitive.Float,
+    "Primitive | Boolean": primitive.Boolean,
+    "Primitive | String": primitive.String,
 }
 
 

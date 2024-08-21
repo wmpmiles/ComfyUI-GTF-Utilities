@@ -30,7 +30,8 @@ def srgb_linear_to_gamma(tensor: torch.Tensor):
     # imprecision issues when truncation occurs
     piece_lo = _quantize(double * 12.92)
     piece_hi = _quantize((1 + a) * torch.pow(double, 1/2.4) - a)
-    gamma = torch.where(double <= 0.0031308, piece_lo, piece_hi).to(torch.float)
+    gamma = torch.where(double <= 0.0031308, piece_lo, piece_hi) \
+        .to(torch.float)
     return gamma
 
 
