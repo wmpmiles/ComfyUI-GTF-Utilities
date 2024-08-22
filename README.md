@@ -1,82 +1,48 @@
-# ComfyUI Resampling
+# Generalised Tensor Format (GTF) Utilities
+
+'Unified Tensor Format' makes more sense but UTF is overloaded.
 
 ## What is this?
 
 This is a set of [ComfyUI](https://github.com/comfyanonymous/ComfyUI) custom 
-nodes that provide image and latent resampling using a number of traditional 
-resampling algorithms, implemented purely with PyTorch.
+nodes that provide implementations or building blocks for implementations of a
+variety of image processing algorithms and methods. 
 
-Supported algorithms are:
-- Nearest Neighbor
-- Triangle (Bilinear)
-- Mitchell-Netravali (Bicubic)
-- Lanczos
-- Area
+These nodes operate on a generalised tensor format that can be converted to and 
+from images, latents, and masks and allow for combining raw tensors from these 
+sources. They are also implemented purely with PyTorch and have no external 
+dependencies.
 
-Each algorithm provides full access to their filter parameters, and for those
-algorithms for which it makes sense both seperable and non-seperable 
-implementations are available.
+The general philosophy of this node set is to provide a selection of fundamental
+operations that can be usefully composed together to create a wide variety of 
+more complex operations.
 
-Most of the implementation was derived from information available at:
-- https://entropymine.com/imageworsener/
-- https://mazzo.li/posts/lanczos.html
-- https://en.wikipedia.org/wiki/Mitchell%E2%80%93Netravali_filters
-- https://medium.com/@wenrudong/what-is-opencvs-inter-area-actually-doing-282a626a09b3
+## Node Categories
 
-## Warning
+- __Interface__ - conversion between the `GTF` type and standard ComfyUI 
+    `IMAGE`, `MASK`, and `LATENT` types
+- __Filter__ - image filtering algorithms
+- __Resample__ - image resampling (resizing) algorithms
+- __Transform__ - procedures that change tensor dimensions, such as cropping and batching
+- __Colorspace__ - colorspace conversion
+- __Tonemap__ - tonemapping algorithms
+- __Convert__ - TODO
+- __Source__ - new GTFs from wholecloth
+- __Math__ - elementwise mathematical operations
+- __BBOX__ - bounding box creation and manipulation
+- __Dimensions__ - dimension creation and manipulation
+- __Primitive__ - primitive value providers
 
-These nodes only implement the direct resampling functions and in no way handle
-colorspace transformation or premultiplication. To do correct image resampling 
-the to-be-resampled images must be in a linear colorspace, and if you're
-resampling an image with an alpha channel then the image must be premultiplied.
+## TODO
+ - Write documentation for all of the nodes and node categories
+ - Reorganise the Transform, Convert, and Filter categories
+ - Create a selection of reference group nodes and workflows
+ - Tests
 
-If you plan to resample images that are in a non-linear colorspace (most images 
-on the web and the outputs from all t2i models that I am aware of) then please 
-find other nodes to do colorspace transformations into a linear colorspace
-before resampling and back to the original colorspace after resampling.
+ ## Changelog
 
-See http://www.ericbrasseur.org/gamma.html for further details.
+ ### v0.0.2 
+ - Updated README with a reasonable placeholder.
 
-## Node Parameters
-
-### In general
-
-All nodes take:
-- `images` or `latents` - a standard ComfyUI image/latent batch
-- `width` - the width of the resampled images
-- `height` - the height of the resampled images
-
-### Triangle
-
-The triangle filter takes a `radius` parameter which determines the 'radius` of 
-the triangle used. A radius of 1 applied seperably will provide standard bilinear 
-filtering, larger radii tend to be much blurier.
-
-### Lanczos
-
-Lanczos filtering takes a `radius` like the triangle filter, however this does
-not change the shape of the existing filter but rather adds further 'support'
-as you can think of the Lanczos filter as tapering off a sync function at a
-distance specified by the radius.
-
-### Mitchell-Netravali
-
-Mitchell-Netravali filters are parameterised by two values: `b` and `c`, but 
-have a fixed radius. The effects of changing these paramaters can be seen in 
-the diagram below, and the recommended values are 0.33 and 0.33, which lies
-along the satisfactory line.
-
-![Mitchell-Netravali paramaters.](https://upload.wikimedia.org/wikipedia/commons/6/6f/Mitchell-Netravali_artifacts.svg)
-
-## Node List
-
-- Resample Image - Nearest Neighbor
-- Resample Image - Area
-- Resample Image - Triangle
-- Resample Image - Mitchell-Netravali
-- Resample Image - Lanczos
-- Resample Latent - Nearest Neighbor
-- Resample Latent - Area
-- Resample Latent - Triangle
-- Resample Latent - Mitchell-Netravali
-- Resample Latent - Lanczos
+ ### v0.0.1
+ - Initial release.
