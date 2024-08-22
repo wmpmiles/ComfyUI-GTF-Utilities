@@ -87,5 +87,26 @@ class String:
     @staticmethod
     def f(value: str) -> tuple[str]:
         if not isinstance(value, str):
-            raise ValueError("Value must be a boolean.")
+            raise ValueError("Value must be a string.")
+        return (value, )
+
+
+class Text:
+    @staticmethod
+    def INPUT_TYPES():
+        return {
+            "required": {
+                "value": ("STRING", {"multiline": True})
+            }
+        }
+
+    RETURN_TYPES = ("STRING", )
+    RETURN_NAMES = ("string", )
+    CATEGORY = "gtf/primitive"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(value: str) -> tuple[str]:
+        if not isinstance(value, str):
+            raise ValueError("Value must be a string.")
         return (value, )

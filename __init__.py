@@ -99,7 +99,8 @@ NODE_CLASS_MAPPINGS = {
     "Primitive | Integer": primitive.Integer,
     "Primitive | Float":   primitive.Float,
     "Primitive | Boolean": primitive.Boolean,
-    "Primitive | String": primitive.String,
+    "Primitive | String":  primitive.String,
+    "Primitive | Text":    primitive.Text,
 }
 
 
