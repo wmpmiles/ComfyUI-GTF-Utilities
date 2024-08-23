@@ -162,3 +162,24 @@ class BinaryThreshold:
     def f(gtf: torch.Tensor, threshold: float) -> tuple[torch.Tensor]:
         thresholded = (gtf >= threshold).to(torch.float)
         return (thresholded, )
+
+
+class QuantizeNormalized:
+    @staticmethod
+    def INPUT_TYPES():
+        return {
+            "required": {
+                "gtf": ("GTF", ),
+                "steps": ("INT", {"default": 256, "min": 2, "max": 1_000_000}),
+            }
+        }
+
+    RETURN_TYPES = ("GTF", )
+    RETURN_NAMES = ("gtf", )
+    CATEGORY = "gtf/convert"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(gtf: torch.Tensor, steps: int) -> tuple[torch.Tensor]:
+        quantized = C.quantize_normalized(gtf, steps)
+        return (quantized, )
