@@ -1,4 +1,12 @@
 import torch
+from typing import Literal
+
+
+F_MAP = {
+    "round": torch.round,
+    "floor": torch.floor,
+    "ceiling": torch.ceil,
+}
 
 
 def to_luminance(tensor: torch.Tensor) -> torch.Tensor:
@@ -7,7 +15,11 @@ def to_luminance(tensor: torch.Tensor) -> torch.Tensor:
     return luminance
 
 
-def quantize_normalized(tensor: torch.Tensor, steps: int) -> torch.Tensor:
+def quantize_normalized(
+    tensor: torch.Tensor,
+    steps: int,
+    mode: Literal["round", "floor", "ceiling"],
+) -> torch.Tensor:
     max_val = steps - 1
-    quantized = torch.round(tensor * max_val) / max_val
+    quantized = F_MAP[mode](tensor * max_val) / max_val
     return quantized

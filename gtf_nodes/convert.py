@@ -171,6 +171,7 @@ class QuantizeNormalized:
             "required": {
                 "gtf": ("GTF", ),
                 "steps": ("INT", {"default": 256, "min": 2, "max": 1_000_000}),
+                "mode": ([*C.F_MAP.keys()], ),
             }
         }
 
@@ -180,6 +181,6 @@ class QuantizeNormalized:
     FUNCTION = "f"
 
     @staticmethod
-    def f(gtf: torch.Tensor, steps: int) -> tuple[torch.Tensor]:
-        quantized = C.quantize_normalized(gtf, steps)
+    def f(gtf: torch.Tensor, steps: int, mode: str) -> tuple[torch.Tensor]:
+        quantized = C.quantize_normalized(gtf, steps, mode)
         return (quantized, )
