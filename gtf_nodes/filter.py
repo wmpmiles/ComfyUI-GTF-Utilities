@@ -39,7 +39,7 @@ class NormalizeKernel:
 
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
-        normalized = U.normalize_kernel(gtf)
+        normalized = U.normalize_kernel(gtf, (2, 3))
         return (normalized, )
 
 
