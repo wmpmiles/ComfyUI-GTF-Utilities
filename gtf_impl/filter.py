@@ -4,30 +4,55 @@
 import torch
 import torch.signal as S
 import torch.nn.functional as F
-from gtf_impl.utils import gtf_min, gtf_max, invert
+import gtf_impl.utils as U
 
 
-def blur_gaussian(tensor: torch.Tensor, sigma: float) -> torch.Tensor:
+def convolve_2d(tensor: torch.Tensor, kernel: torch.Tensor) -> torch.Tensor:
+    b, c, _, _ = tensor.shape
+    kb, kc, kh, kw = kernel.shape
+    if kh % 2 == 0 or kw % 2 == 0:
+        raise ValueError("Kernels must have odd height and width.")
+    if kb != 1 and kb != b:
+        raise ValueError("A kernel with batch size greater than 1 must have \
+                         the same batch size as the GTF.")
+    if kc != 1 and kc != c:
+        raise ValueError("A kernel with more than 1 channel must have the \
+                         same number of chdannels as the GTF.")
+    ph, pw = kh // 2, kw // 2
+    kernel_reshaped = kernel.reshape(kb, kc, 1, 1, kh, kw)
+    padded_h = U.pad_tensor_reflect(tensor, 2, ph, ph)
+    padded = U.pad_tensor_reflect(padded_h, 3, pw, pw)
+    unfolded = _unfold_2d(padded, kh, kw)
+    multiplied = unfolded * kernel_reshaped
+    convolved = multiplied.sum(-1).sum(-1)
+    return convolved
+
+
+def _unfold_2d(tensor: torch.Tensor, kh: int, kw: int) -> torch.Tensor:
+    b, c, h, w = tensor.shape
+    oh, ow = h - kh + 1, w - kw + 1
+    window_offsets = U.outer_sum(torch.arange(kh), torch.arange(kw))
+    indices_2d = torch.arange(h * w).reshape(1, 1, oh, ow, 1, 1)
+    indices_4d = indices_2d + window_offsets.reshape(1, 1, 1, 1, kh, kw)
+    indices_1d = indices_4d.reshape(1, 1, -1)
+    data_1d = tensor.reshape(b, c, -1).index_select(2, indices_1d)
+    data_4d = data_1d.reshape(b, c, oh, ow, kh, kw)
+    return data_4d
+
+
+def kernel_gaussian(sigma: float) -> torch.Tensor:
     """
     Preconditions:
     - sigma >= 0
     - tensor is in (B, C, H, W) dim order
     """
-    channels = int(tensor.shape[1])
+    if sigma < 0:
+        raise ValueError("Sigma must be greater than or equal to 0.")
     radius = int(4.0 * sigma + 0.5)
     size = radius * 2 + 1
-    pad = (radius, ) * 4
     gaussian = S.windows.gaussian(size, std=sigma)
-    normalized_gaussian = gaussian / torch.sum(gaussian)
-    kernel = \
-        normalized_gaussian.reshape(1, 1, 1, -1).expand(channels, 1, -1, -1)
-    tensor_padded = F.pad(tensor, pad, "reflect")
-    tensor_blurred_w = \
-        F.conv2d(tensor_padded, kernel, padding=0, groups=channels)
-    kernel_permuted = kernel.permute(0, 1, 3, 2)
-    tensor_blurred_wh = \
-        F.conv2d(tensor_blurred_w, kernel_permuted, padding=0, groups=channels)
-    return tensor_blurred_wh
+    reshaped = gaussian.reshape(1, 1, 1, -1)
+    return reshaped
 
 
 #                       #

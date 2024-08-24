@@ -29,8 +29,9 @@ NODE_CLASS_MAPPINGS = {
     "GTF | Resample - Mitchell-Netravali": resample.MitchellNetravali,
     "GTF | Resample - Lanczos":            resample.Lanczos,
     # Filter
-    "GTF | Filter - Gaussian Blur": filter.BlurGaussian,
+    "GTF | Filter - Convolve": filter.Convolve,
     "GTF | Filter - Morphological": filter.MorphologicalFilter,
+    "GTF | Kernel - Gaussian": filter.KernelGaussian,
     # Colorspace
     "GTF | Colorspace - SRGB Linear to Gamma": colorspace.SRGBLinearToGamma,
     "GTF | Colorspace - SRGB Gamma to Linear": colorspace.SRGBGammaToLinear,

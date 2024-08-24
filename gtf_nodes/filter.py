@@ -2,6 +2,27 @@ import torch
 from gtf_impl import filter as F
 
 
+class Convolve:
+    @staticmethod
+    def INPUT_TYPES():
+        return {
+            "required": {
+                "gtf": ("GTF", {}),
+                "gtf_kernel": ("GTF", {})
+            },
+        }
+
+    RETURN_TYPES = ("GTF", )
+    RETURN_NAMES = ("gtf", )
+    CATEGORY = "gtf/filter"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(gtf: torch.Tensor, gtf_kernel: torch.Tensor) -> tuple[torch.Tensor]:
+        convolved = F.convolve_2d(gtf, gtf_kernel)
+        return (convolved, )
+
+
 class MorphologicalFilter:
     @staticmethod
     def INPUT_TYPES():
@@ -38,24 +59,21 @@ class MorphologicalFilter:
         return (filtered, )
 
 
-class BlurGaussian:
+class KernelGaussian:
     @staticmethod
     def INPUT_TYPES():
         return {
             "required": {
-                "gtf": ("GTF", {}),
                 "sigma": ("FLOAT", {"default": 3.0, "min": 0.0, "step": 0.1}),
             },
         }
 
     RETURN_TYPES = ("GTF", )
     RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/filter"
+    CATEGORY = "gtf/filter/kernel"
     FUNCTION = "f"
 
     @staticmethod
-    def f(gtf: torch.Tensor, sigma: float) -> tuple[torch.Tensor]:
-        if sigma <= 0.0:
-            return (gtf, )
-        blurred = F.blur_gaussian(gtf, sigma)
-        return (blurred, )
+    def f(sigma: float) -> tuple[torch.Tensor]:
+        kernel = F.kernel_gaussian(sigma)
+        return (kernel, )

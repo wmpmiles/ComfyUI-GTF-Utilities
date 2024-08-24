@@ -7,22 +7,18 @@ def round_to_mult_of(number: int, mult_of: int) -> int:
     return aligned
 
 
-def gtf_min_max_f(
-    is_max: bool,
-) -> torch.Tensor:
-    f1 = torch.amax if is_max else torch.amin
-
-    def f2(tensor: torch.Tensor, dims: Iterable[int]) -> torch.Tensor:
-        curr = tensor
-        for dim in dims:
-            curr = f1(curr, dim, True)
-        return curr
-
-    return f2
+def gtf_min(tensor: torch.Tensor, dims: Iterable[int]) -> torch.Tensor:
+    curr = tensor
+    for dim in dims:
+        curr = torch.amin(curr, dim, True)
+    return curr
 
 
-gtf_min = gtf_min_max_f(False)
-gtf_max = gtf_min_max_f(True)
+def gtf_max(tensor: torch.Tensor, dims: Iterable[int]) -> torch.Tensor:
+    curr = tensor
+    for dim in dims:
+        curr = torch.amax(curr, dim, True)
+    return curr
 
 
 def slice_dim(
@@ -51,3 +47,19 @@ def pad_tensor_reflect(
     end = tensor[slice_dim(dim, length-(pad_end+1), -1)].flip(dim)
     padded = torch.cat((start, tensor, end), dim)
     return padded
+
+
+def outer_sum(lhs: torch.Tensor, rhs: torch.Tensor) -> torch.Tensor:
+    ret = lhs.unsqueeze(1) + rhs
+    return ret
+
+
+def normalize(tensor: torch.Tensor, dims: Iterable[int]) -> torch.Tensor:
+    dims = sorted(dims)
+    denominator = tensor
+    for dim in reversed(dims):
+        denominator = denominator.sum(dim)
+    for dim in dims:
+        denominator = denominator.unsqueeze(dim)
+    normalized = tensor / denominator
+    return normalized
