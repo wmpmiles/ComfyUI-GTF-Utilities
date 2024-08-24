@@ -32,11 +32,11 @@ def convolve_2d(tensor: torch.Tensor, kernel: torch.Tensor) -> torch.Tensor:
 def _unfold_2d(tensor: torch.Tensor, kh: int, kw: int) -> torch.Tensor:
     b, c, h, w = tensor.shape
     oh, ow = h - kh + 1, w - kw + 1
-    window_offsets = U.outer_sum(torch.arange(kh), torch.arange(kw))
-    indices_2d = torch.arange(h * w).reshape(1, 1, oh, ow, 1, 1)
-    indices_4d = indices_2d + window_offsets.reshape(1, 1, 1, 1, kh, kw)
-    indices_1d = indices_4d.reshape(1, 1, -1)
-    data_1d = tensor.reshape(b, c, -1).index_select(2, indices_1d)
+    window_offsets = U.outer_sum(torch.arange(kh) * w, torch.arange(kw))
+    indices_2d = U.outer_sum(torch.arange(oh) * w, torch.arange(ow))
+    indices_4d = window_offsets.reshape(1, 1, kh, kw) \
+        + indices_2d.reshape(oh, ow, 1, 1)
+    data_1d = tensor.reshape(b, c, -1).index_select(2, indices_4d.flatten())
     data_4d = data_1d.reshape(b, c, oh, ow, kh, kw)
     return data_4d
 

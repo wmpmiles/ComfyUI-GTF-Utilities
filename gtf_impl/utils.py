@@ -50,7 +50,7 @@ def pad_tensor_reflect(
 
 
 def outer_sum(lhs: torch.Tensor, rhs: torch.Tensor) -> torch.Tensor:
-    ret = lhs.unsqueeze(1) + rhs
+    ret = lhs.unsqueeze(1) + rhs.unsqueeze(0)
     return ret
 
 
