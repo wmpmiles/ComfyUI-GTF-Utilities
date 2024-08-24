@@ -70,6 +70,13 @@ NODE_CLASS_MAPPINGS = {
     "GTF | Math - Pow":        math.Pow,
     "GTF | Math - Equal":      math.Equal,
     "GTF | Math - Less Than":  math.LessThan,
+    "GTF | Math - Sin":        math.Sin,
+    "GTF | Math - Cos":        math.Cos,
+    "GTF | Math - Tan":        math.Tan,
+    "GTF | Math - Asin":       math.Asin,
+    "GTF | Math - Acos":       math.Acos,
+    "GTF | Math - Atan":       math.Atan,
+    "GTF | Math - Atan2":      math.Atan2,
     # Source
     "GTF | Source - Zero":  source.Zero,
     "GTF | Source - One":   source.One,

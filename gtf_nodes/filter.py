@@ -159,5 +159,5 @@ class KernelGaussian:
 
     @staticmethod
     def f(sigma: float) -> tuple[torch.Tensor]:
-        kernel = F.kernel_gaussian(sigma)
+        kernel = F.kernel_gaussian_1d(sigma)
         return (kernel, )

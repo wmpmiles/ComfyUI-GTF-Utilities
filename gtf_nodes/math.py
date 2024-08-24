@@ -221,3 +221,147 @@ class LessThan:
     ) -> tuple[torch.Tensor]:
         less_than = (gtf_a < gtf_b).to(torch.float)
         return (less_than, )
+
+
+class Sin:
+    @staticmethod
+    def INPUT_TYPES():
+        return {
+            "required": {
+                "gtf": ("GTF", ),
+            }
+        }
+
+    RETURN_TYPES = ("GTF", )
+    RETURN_NAMES = ("gtf", )
+    CATEGORY = "gtf/math"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
+        sin = torch.sin(gtf)
+        return (sin, )
+
+
+class Cos:
+    @staticmethod
+    def INPUT_TYPES():
+        return {
+            "required": {
+                "gtf": ("GTF", ),
+            }
+        }
+
+    RETURN_TYPES = ("GTF", )
+    RETURN_NAMES = ("gtf", )
+    CATEGORY = "gtf/math"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
+        cos = torch.cos(gtf)
+        return (cos, )
+
+
+class Tan:
+    @staticmethod
+    def INPUT_TYPES():
+        return {
+            "required": {
+                "gtf": ("GTF", ),
+            }
+        }
+
+    RETURN_TYPES = ("GTF", )
+    RETURN_NAMES = ("gtf", )
+    CATEGORY = "gtf/math"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
+        tan = torch.tan(gtf)
+        return (tan, )
+
+
+class Asin:
+    @staticmethod
+    def INPUT_TYPES():
+        return {
+            "required": {
+                "gtf": ("GTF", ),
+            }
+        }
+
+    RETURN_TYPES = ("GTF", )
+    RETURN_NAMES = ("gtf", )
+    CATEGORY = "gtf/math"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
+        asin = torch.asin(gtf)
+        return (asin, )
+
+
+class Acos:
+    @staticmethod
+    def INPUT_TYPES():
+        return {
+            "required": {
+                "gtf": ("GTF", ),
+            }
+        }
+
+    RETURN_TYPES = ("GTF", )
+    RETURN_NAMES = ("gtf", )
+    CATEGORY = "gtf/math"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
+        acos = torch.acos(gtf)
+        return (acos, )
+
+
+class Atan:
+    @staticmethod
+    def INPUT_TYPES():
+        return {
+            "required": {
+                "gtf": ("GTF", ),
+            }
+        }
+
+    RETURN_TYPES = ("GTF", )
+    RETURN_NAMES = ("gtf", )
+    CATEGORY = "gtf/math"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
+        atan = torch.atan(gtf)
+        return (atan, )
+
+
+class Atan2:
+    @staticmethod
+    def INPUT_TYPES():
+        return {
+            "required": {
+                "gtf_opposite": ("GTF", ),
+                "gtf_adjacent": ("GTF", ),
+            }
+        }
+
+    RETURN_TYPES = ("GTF", )
+    RETURN_NAMES = ("gtf", )
+    CATEGORY = "gtf/math"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(
+        gtf_opposite: torch.Tensor,
+        gtf_adjacent: torch.Tensor,
+    ) -> tuple[torch.Tensor]:
+        atan2 = torch.atan2(gtf_opposite, gtf_adjacent)
+        return (atan2, )

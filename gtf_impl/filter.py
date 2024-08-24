@@ -41,7 +41,7 @@ def _unfold_2d(tensor: torch.Tensor, kh: int, kw: int) -> torch.Tensor:
     return data_4d
 
 
-def kernel_gaussian(sigma: float) -> torch.Tensor:
+def kernel_gaussian_1d(sigma: float) -> torch.Tensor:
     """
     Preconditions:
     - sigma >= 0
@@ -55,6 +55,15 @@ def kernel_gaussian(sigma: float) -> torch.Tensor:
     reshaped = gaussian.reshape(1, 1, 1, -1)
     return reshaped
 
+
+def kernel_difference_1d() -> torch.Tensor:
+    kernel = torch.tensor((1, 0, -1), dtype=torch.float).reshape(1, 1, 1, -1)
+    return kernel
+
+
+def kernel_averaging_1d() -> torch.Tensor:
+    kernel = torch.tensor((1, 2, 1), dtype=torch.float).reshape(1, 1, 1, -1)
+    return kernel
 
 #                       #
 # MORPHOLOGICAL FILTERS #
