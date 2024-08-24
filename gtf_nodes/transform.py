@@ -172,7 +172,7 @@ class Channels1To3Repeat:
     FUNCTION = "f"
 
     @staticmethod
-    def f(gtf: torch.Tensor) -> tuple[list[torch.Tensor]]:
+    def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
         if gtf.shape[1] != 1:
             raise ValueError("Can only convert single channel GTFs.")
         tensor = gtf.repeat(1, 3, 1, 1)
@@ -194,8 +194,128 @@ class Channels1To4Repeat:
     FUNCTION = "f"
 
     @staticmethod
-    def f(gtf: torch.Tensor) -> tuple[list[torch.Tensor]]:
+    def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
         if gtf.shape[1] != 1:
             raise ValueError("Can only convert single channel GTFs.")
         tensor = gtf.repeat(1, 4, 1, 1)
         return (tensor, )
+
+
+class Transpose:
+    @staticmethod
+    def INPUT_TYPES():
+        return {
+            "required": {
+                "gtf": ("GTF", {}),
+            },
+        }
+
+    RETURN_TYPES = ("GTF", )
+    RETURN_NAMES = ("gtf", )
+    CATEGORY = "gtf/transform"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
+        transposed = gtf.permute(0, 1, 3, 2)
+        return (transposed, )
+
+
+class FlipHorizontal:
+    @staticmethod
+    def INPUT_TYPES():
+        return {
+            "required": {
+                "gtf": ("GTF", {}),
+            },
+        }
+
+    RETURN_TYPES = ("GTF", )
+    RETURN_NAMES = ("gtf", )
+    CATEGORY = "gtf/transform"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
+        flipped = gtf.flip((3, ))
+        return (flipped, )
+
+
+class FlipVertical:
+    @staticmethod
+    def INPUT_TYPES():
+        return {
+            "required": {
+                "gtf": ("GTF", {}),
+            },
+        }
+
+    RETURN_TYPES = ("GTF", )
+    RETURN_NAMES = ("gtf", )
+    CATEGORY = "gtf/transform"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
+        flipped = gtf.flip((2, ))
+        return (flipped, )
+
+
+class RotateCW:
+    @staticmethod
+    def INPUT_TYPES():
+        return {
+            "required": {
+                "gtf": ("GTF", {}),
+            },
+        }
+
+    RETURN_TYPES = ("GTF", )
+    RETURN_NAMES = ("gtf", )
+    CATEGORY = "gtf/transform"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
+        rotated = gtf.rot90(k=1, dims=(2, 3))
+        return (rotated, )
+
+
+class RotateCCW:
+    @staticmethod
+    def INPUT_TYPES():
+        return {
+            "required": {
+                "gtf": ("GTF", {}),
+            },
+        }
+
+    RETURN_TYPES = ("GTF", )
+    RETURN_NAMES = ("gtf", )
+    CATEGORY = "gtf/transform"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
+        rotated = gtf.rot90(k=-1, dims=(2, 3))
+        return (rotated, )
+
+
+class Rotate180:
+    @staticmethod
+    def INPUT_TYPES():
+        return {
+            "required": {
+                "gtf": ("GTF", {}),
+            },
+        }
+
+    RETURN_TYPES = ("GTF", )
+    RETURN_NAMES = ("gtf", )
+    CATEGORY = "gtf/transform"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
+        rotated = gtf.rot90(k=2, dims=(2, 3))
+        return (rotated, )

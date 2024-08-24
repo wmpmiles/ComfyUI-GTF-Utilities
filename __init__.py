@@ -53,6 +53,12 @@ NODE_CLASS_MAPPINGS = {
     "GTF | Transform - Connected Components":    transform.ConnectedComponents,
     "GTF | Transform - 1 Channel to 3":          transform.Channels1To3Repeat,
     "GTF | Transform - 1 Channel to 4":          transform.Channels1To4Repeat,
+    "GTF | Transform - Transpose":               transform.Transpose,
+    "GTF | Transform - Flip Vertical":           transform.FlipVertical,
+    "GTF | Transform - Flip Horizontal":         transform.FlipHorizontal,
+    "GTF | Transform - Rotate CW":               transform.RotateCW,
+    "GTF | Transform - Rotate CCW":              transform.RotateCCW,
+    "GTF | Transform - Rotate 180":              transform.Rotate180,
     # Math
     "GTF | Math - Add":        math.Add,
     "GTF | Math - Subtract":   math.Subtract,
