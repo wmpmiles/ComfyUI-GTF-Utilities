@@ -54,7 +54,9 @@ def outer_sum(lhs: torch.Tensor, rhs: torch.Tensor) -> torch.Tensor:
     return ret
 
 
-def normalize(tensor: torch.Tensor, dims: Iterable[int]) -> torch.Tensor:
+def normalize_kernel(
+    tensor: torch.Tensor, dims: Iterable[int]
+) -> torch.Tensor:
     dims = sorted(dims)
     denominator = tensor
     for dim in reversed(dims):

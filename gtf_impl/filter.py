@@ -68,7 +68,7 @@ def dilate(tensor: torch.Tensor, radius: int) -> torch.Tensor:
 
 
 def erode(tensor: torch.Tensor, radius: int) -> torch.Tensor:
-    eroded = invert(dilate(invert(tensor), radius))
+    eroded = U.invert(dilate(U.invert(tensor), radius))
     return eroded
 
 
@@ -91,9 +91,9 @@ def stretch_contrast(
     min_val: float = 0.0,
     max_val: float = 1.0
 ) -> torch.Tensor:
-    cur_min = gtf_min(tensor, (2, 3))
+    cur_min = U.gtf_min(tensor, (2, 3))
     minned = tensor - (cur_min - min_val)
-    cur_max = gtf_max(minned, (2, 3))
+    cur_max = U.gtf_max(minned, (2, 3))
     maxxed = minned * (max_val / cur_max)
     clamped = maxxed.clamp(min_val, max_val)
     return clamped

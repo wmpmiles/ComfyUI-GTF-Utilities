@@ -12,7 +12,7 @@ Supports:
 from typing import Callable
 import torch
 import math
-from gtf_impl.utils import pad_tensor_reflect, outer_sum, normalize
+from gtf_impl.utils import pad_tensor_reflect, outer_sum, normalize_kernel
 
 
 #                              #
@@ -142,7 +142,7 @@ def _filter_1d(
     d_p = pad_tensor_reflect(d_s, dim, p_0, p_0 + 1)
     d_2d = _data_values_1d(d_p, i_snn, i_w, p, p_0, L, w, dim)
     f = filter(x_values)
-    f_n = normalize(f, (1,))
+    f_n = normalize_kernel(f, (1,))
     shape = [1] * d_2d.dim()
     shape[dim] = L
     shape[dim+1] = w
@@ -235,7 +235,7 @@ def filter_2d(
     l_p = (int(d_p.shape[dim[0]]), int(d_p.shape[dim[1]]))
     d_4d = _data_values_2d(d_p, i_snn, p, i_w, p0, w, L, l_p, dim)
     f = filter(X_w2)
-    f_n = normalize(f, (2, 3))
+    f_n = normalize_kernel(f, (2, 3))
     shape = [1] * d_4d.dim()
     shape[dim[0]] = L[0]
     shape[dim[1]] = L[1]

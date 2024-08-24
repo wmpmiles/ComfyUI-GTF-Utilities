@@ -1,5 +1,46 @@
 import torch
 from gtf_impl import filter as F
+from gtf_impl import utils as U
+
+
+class Invert:
+    @staticmethod
+    def INPUT_TYPES():
+        return {
+            "required": {
+                "gtf": ("GTF", {}),
+            },
+        }
+
+    RETURN_TYPES = ("GTF", )
+    RETURN_NAMES = ("gtf", )
+    CATEGORY = "gtf/filter"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
+        inverted = U.invert(gtf)
+        return (inverted, )
+
+
+class NormalizeKernel:
+    @staticmethod
+    def INPUT_TYPES():
+        return {
+            "required": {
+                "gtf": ("GTF", {}),
+            },
+        }
+
+    RETURN_TYPES = ("GTF", )
+    RETURN_NAMES = ("gtf", )
+    CATEGORY = "gtf/filter"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
+        normalized = U.normalize_kernel(gtf)
+        return (normalized, )
 
 
 class Convolve:

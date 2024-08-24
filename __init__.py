@@ -30,6 +30,8 @@ NODE_CLASS_MAPPINGS = {
     "GTF | Resample - Lanczos":            resample.Lanczos,
     # Filter
     "GTF | Filter - Convolve": filter.Convolve,
+    "GTF | Filter - Normalize Kernel": filter.NormalizeKernel,
+    "GTF | Filter - Invert": filter.Invert,
     "GTF | Filter - Morphological": filter.MorphologicalFilter,
     "GTF | Kernel - Gaussian": filter.KernelGaussian,
     # Colorspace
