@@ -43,6 +43,49 @@ class NormalizeKernel:
         return (normalized, )
 
 
+class BinaryThreshold:
+    @staticmethod
+    def INPUT_TYPES():
+        return {
+            "required": {
+                "gtf": ("GTF", ),
+                "threshold": ("FLOAT", {"default": 0.5, "step": 0.001}),
+            }
+        }
+
+    RETURN_TYPES = ("GTF", )
+    RETURN_NAMES = ("gtf", )
+    CATEGORY = "gtf/convert"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(gtf: torch.Tensor, threshold: float) -> tuple[torch.Tensor]:
+        thresholded = (gtf >= threshold).to(torch.float)
+        return (thresholded, )
+
+
+class Quantize:
+    @staticmethod
+    def INPUT_TYPES():
+        return {
+            "required": {
+                "gtf": ("GTF", ),
+                "steps": ("INT", {"default": 256, "min": 2, "max": 1_000_000}),
+                "mode": ([*F.F_MAP.keys()], ),
+            }
+        }
+
+    RETURN_TYPES = ("GTF", )
+    RETURN_NAMES = ("gtf", )
+    CATEGORY = "gtf/convert"
+    FUNCTION = "f"
+
+    @staticmethod
+    def f(gtf: torch.Tensor, steps: int, mode: str) -> tuple[torch.Tensor]:
+        quantized = F.quantize(gtf, steps, mode)
+        return (quantized, )
+
+
 class Convolve:
     @staticmethod
     def INPUT_TYPES():

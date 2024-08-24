@@ -5,6 +5,7 @@ import torch
 import torch.signal as S
 import torch.nn.functional as F
 import gtf_impl.utils as U
+from typing import Literal
 
 
 def convolve_2d(tensor: torch.Tensor, kernel: torch.Tensor) -> torch.Tensor:
@@ -97,3 +98,20 @@ def stretch_contrast(
     maxxed = minned * (max_val / cur_max)
     clamped = maxxed.clamp(min_val, max_val)
     return clamped
+
+
+F_MAP = {
+    "round": torch.round,
+    "floor": torch.floor,
+    "ceiling": torch.ceil,
+}
+
+
+def quantize(
+    tensor: torch.Tensor,
+    steps: int,
+    mode: Literal["round", "floor", "ceiling"],
+) -> torch.Tensor:
+    max_val = steps - 1
+    quantized = F_MAP[mode](tensor * max_val) / max_val
+    return quantized

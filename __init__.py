@@ -32,6 +32,8 @@ NODE_CLASS_MAPPINGS = {
     "GTF | Filter - Convolve": filter.Convolve,
     "GTF | Filter - Normalize Kernel": filter.NormalizeKernel,
     "GTF | Filter - Invert": filter.Invert,
+    "GTF | Filter - Binary Threshold": filter.BinaryThreshold,
+    "GTF | Filter - Quantize": filter.Quantize,
     "GTF | Filter - Morphological": filter.MorphologicalFilter,
     "GTF | Kernel - Gaussian": filter.KernelGaussian,
     # Colorspace
@@ -85,8 +87,6 @@ NODE_CLASS_MAPPINGS = {
     "GTF | Convert - Batch Max":           convert.BatchMax,
     "GTF | Convert - Channel Min":         convert.ChannelMin,
     "GTF | Convert - Channel Max":         convert.ChannelMax,
-    "GTF | Convert - Binary Threshold":    convert.BinaryThreshold,
-    "GTF | Convert - Quantize Normalized": convert.QuantizeNormalized,
     # BBOX
     "BBOX | From Mask":  bbox.FromMask,
     "BBOX | Change":     bbox.Change,
