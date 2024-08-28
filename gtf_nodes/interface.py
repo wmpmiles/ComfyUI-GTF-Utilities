@@ -1,134 +1,105 @@
 from copy import copy
 import torch
+from .. import types as T
 
 
-class FromImages:
+class InterfaceBase:
     @staticmethod
     def INPUT_TYPES():
-        return {
-            "required": {
-                "images": ("IMAGE", {}),
-            },
-        }
+        return {"required": {"gtf": ("GTF", {})}}
 
-    RETURN_TYPES = ("GTF", )
-    RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/interface"
+    RETURN_TYPES = ('GTF', )
+    RETURN_NAMES = ('gtf', )
+    CATEGORY = 'gtf/interface'
     FUNCTION = "f"
 
+
+class FromImage(InterfaceBase):
     @staticmethod
-    def f(images: torch.Tensor) -> tuple[torch.Tensor]:
-        tensor = images.permute(0, 3, 1, 2)
+    def INPUT_TYPES():
+        return {"required": {"image": ("IMAGE", {})}}
+
+    @staticmethod
+    def f(image: torch.Tensor) -> tuple[torch.Tensor]:
+        tensor = image.permute(0, 3, 1, 2)
         return (tensor, )
 
 
-class FromMasks:
+class FromMask(InterfaceBase):
     @staticmethod
     def INPUT_TYPES():
-        return {
-            "required": {
-                "masks": ("MASK", {}),
-            },
-        }
-
-    RETURN_TYPES = ("GTF", )
-    RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/interface"
-    FUNCTION = "f"
+        return {"required": {"mask": ("MASK", {})}}
 
     @staticmethod
-    def f(masks: torch.Tensor) -> tuple[torch.Tensor]:
-        tensor = masks.unsqueeze(1)
+    def f(mask: torch.Tensor) -> tuple[torch.Tensor]:
+        tensor = mask.unsqueeze(1)
         return (tensor, )
 
 
-class FromLatents:
+class FromLatent(InterfaceBase):
     @staticmethod
     def INPUT_TYPES():
-        return {
-            "required": {
-                "latents": ("LATENT", {}),
-            },
-        }
-
-    RETURN_TYPES = ("GTF", )
-    RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/interface"
-    FUNCTION = "f"
+        return {"required": {"latent": ("LATENT", {})}}
 
     @staticmethod
-    def f(latents: dict[str, torch.Tensor]) -> tuple[torch.Tensor]:
-        tensor = latents["samples"]
+    def f(latent: T.Latent) -> tuple[torch.Tensor]:
+        tensor = latent["samples"]
         return (tensor, )
 
 
-class ToImages:
-    @staticmethod
-    def INPUT_TYPES():
-        return {
-            "required": {
-                "gtf": ("GTF", {}),
-            },
-        }
-
+class ToImage(InterfaceBase):
     RETURN_TYPES = ("IMAGE", )
-    RETURN_NAMES = ("images", )
-    CATEGORY = "gtf/interface"
-    FUNCTION = "f"
+    RETURN_NAMES = ("image", )
 
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
         if gtf.shape[1] not in (3, 4):
-            raise ValueError("Can only convert 3 and 4 channel GTFs to \
-                images.")
-        images = gtf.permute(0, 2, 3, 1)
-        return (images, )
+            raise ValueError("Can only convert a 3 or 4 channel GTF to an image.")
+        image = gtf.permute(0, 2, 3, 1)
+        return (image, )
 
 
-class ToMasks:
-    @staticmethod
-    def INPUT_TYPES():
-        return {
-            "required": {
-                "gtf": ("GTF", {}),
-            },
-        }
-
+class ToMask(InterfaceBase):
     RETURN_TYPES = ("MASK", )
-    RETURN_NAMES = ("masks", )
-    CATEGORY = "gtf/interface"
-    FUNCTION = "f"
+    RETURN_NAMES = ("mask", )
 
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
         if gtf.shape[1] != 1:
             raise ValueError("Cannot convert multi-channel GTF to mask.")
-        masks = gtf.squeeze(1)
-        return (masks, )
+        mask = gtf.squeeze(1)
+        return (mask, )
 
 
-class UpdateLatents:
+class UpdateLatent(InterfaceBase):
     @staticmethod
     def INPUT_TYPES():
-        return {
-            "required": {
-                "gtf": ("GTF", {}),
-                "latents": ("LATENT", {}),
-            },
-        }
+        return {"required": {
+            "gtf": ("GTF", {}),
+            "latent": ("LATENT", {}),
+        }}
 
     RETURN_TYPES = ("LATENT", )
-    RETURN_NAMES = ("latents", )
-    CATEGORY = "gtf/interface"
-    FUNCTION = "f"
+    RETURN_NAMES = ("latent", )
 
     @staticmethod
-    def f(gtf: torch.Tensor, latents: dict[str, torch.Tensor]) -> tuple[dict]:
+    def f(gtf: torch.Tensor, latent: T.Latent) -> tuple[T.Latent]:
         channels = gtf.shape[1]
-        expected_channels = latents["samples"].shape[1]
+        expected_channels = latent["samples"].shape[1]
         if channels != expected_channels:
-            raise ValueError(f"Expected GTF with {expected_channels} channels, \
-                but GTF had {channels} channels.")
-        updated_latents = copy(latents)
-        updated_latents["samples"] = gtf
-        return (updated_latents, )
+            raise ValueError(f"Expected GTF with {expected_channels} channels but GTF had {channels} channels.")
+        updated_latent = copy(latent)
+        updated_latent["samples"] = gtf
+        return (updated_latent, )
+
+
+NODE_CLASS_MAPPINGS = {
+    "GTF | From Image":    FromImage,
+    "GTF | From Mask":     FromMask,
+    "GTF | From Latent":   FromLatent,
+    "GTF | To Image":      ToImage,
+    "GTF | To Mask":       ToMask,
+    "GTF | Update Latent": UpdateLatent,
+}
+
+__all__ = ["NODE_CLASS_MAPPINGS"]

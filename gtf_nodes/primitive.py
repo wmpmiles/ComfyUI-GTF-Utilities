@@ -1,20 +1,19 @@
-class Integer:
+# BASE CLASSES
+
+class PrimitiveBase:
+    CATEGORY = "gtf/primitive"
+    FUNCTION = "f"
+
+
+# NODES
+
+class Integer(PrimitiveBase):
     @staticmethod
     def INPUT_TYPES():
-        return {
-            "required": {
-                "value": ("INT", {
-                    "default": 0,
-                    "min": -1_000_000_000,
-                    "max": 1_000_000_000,
-                })
-            }
-        }
+        return {"required": {"value": ("INT", {"default": 0, "min": -1_000_000_000, "max": 1_000_000_000, })}}
 
     RETURN_TYPES = ("INT", )
     RETURN_NAMES = ("int", )
-    CATEGORY = "gtf/primitive"
-    FUNCTION = "f"
 
     @staticmethod
     def f(value: int) -> tuple[int]:
@@ -23,24 +22,13 @@ class Integer:
         return (value, )
 
 
-class Float:
+class Float(PrimitiveBase):
     @staticmethod
     def INPUT_TYPES():
-        return {
-            "required": {
-                "value": ("FLOAT", {
-                    "default": 0.0,
-                    "step": 0.0001,
-                    "min": -1_000_000_000,
-                    "max": 1_000_000_000,
-                })
-            }
-        }
+        return {"required": {"value": ("FLOAT", {"default": 0.0, "step": 0.0001, "min": -1_000_000_000, "max": 1_000_000_000})}}
 
     RETURN_TYPES = ("FLOAT", )
     RETURN_NAMES = ("float", )
-    CATEGORY = "gtf/primitive"
-    FUNCTION = "f"
 
     @staticmethod
     def f(value: float) -> tuple[float]:
@@ -49,19 +37,13 @@ class Float:
         return (value, )
 
 
-class Boolean:
+class Boolean(PrimitiveBase):
     @staticmethod
     def INPUT_TYPES():
-        return {
-            "required": {
-                "value": ("BOOLEAN", {})
-            }
-        }
+        return {"required": {"value": ("BOOLEAN", {})}}
 
     RETURN_TYPES = ("BOOLEAN", )
     RETURN_NAMES = ("boolean", )
-    CATEGORY = "gtf/primitive"
-    FUNCTION = "f"
 
     @staticmethod
     def f(value: bool) -> tuple[bool]:
@@ -70,19 +52,13 @@ class Boolean:
         return (value, )
 
 
-class String:
+class String(PrimitiveBase):
     @staticmethod
     def INPUT_TYPES():
-        return {
-            "required": {
-                "value": ("STRING", {})
-            }
-        }
+        return {"required": {"value": ("STRING", {})}}
 
     RETURN_TYPES = ("STRING", )
     RETURN_NAMES = ("string", )
-    CATEGORY = "gtf/primitive"
-    FUNCTION = "f"
 
     @staticmethod
     def f(value: str) -> tuple[str]:
@@ -94,19 +70,24 @@ class String:
 class Text:
     @staticmethod
     def INPUT_TYPES():
-        return {
-            "required": {
-                "value": ("STRING", {"multiline": True})
-            }
-        }
+        return {"required": {"value": ("STRING", {"multiline": True})}}
 
     RETURN_TYPES = ("STRING", )
     RETURN_NAMES = ("string", )
-    CATEGORY = "gtf/primitive"
-    FUNCTION = "f"
 
     @staticmethod
     def f(value: str) -> tuple[str]:
         if not isinstance(value, str):
             raise ValueError("Value must be a string.")
         return (value, )
+
+
+NODE_CLASS_MAPPINGS = {
+    "Primitive | Integer": Integer,
+    "Primitive | Float":   Float,
+    "Primitive | Boolean": Boolean,
+    "Primitive | String":  String,
+    "Primitive | Text":    Text,
+}
+
+__all__ = ["NODE_CLASS_MAPPINGS"]

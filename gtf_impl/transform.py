@@ -1,6 +1,6 @@
 import torch
 import torch.nn.functional as F
-from gtf_impl.utils import slice_dim, pad_tensor_reflect
+from ..gtf_impl.utils import slice_dim, pad_tensor_reflect
 
 
 def crop_uncrop(

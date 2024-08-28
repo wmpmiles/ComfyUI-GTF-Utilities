@@ -4,8 +4,10 @@
 import torch
 import torch.signal as S
 import torch.nn.functional as F
-import gtf_impl.utils as U
+from ..gtf_impl import utils as U
 from typing import Literal
+from math import pi, sqrt, log, ceil
+from scipy.special import erfinv
 
 
 def convolve_2d(tensor: torch.Tensor, kernel: torch.Tensor) -> torch.Tensor:
@@ -41,29 +43,73 @@ def _unfold_2d(tensor: torch.Tensor, kh: int, kw: int) -> torch.Tensor:
     return data_4d
 
 
-def kernel_gaussian_1d(sigma: float) -> torch.Tensor:
-    """
-    Preconditions:
-    - sigma >= 0
-    - tensor is in (B, C, H, W) dim order
-    """
-    if sigma < 0:
-        raise ValueError("Sigma must be greater than or equal to 0.")
-    radius = int(4.0 * sigma + 0.5)
-    size = radius * 2 + 1
+def gaussian_radius(sigma: float, area: float) -> float:
+    if area <= 0 or area >= 1:
+        raise ValueError("`area` must be in (0, 1).")
+    radius = sqrt(2) * sigma * erfinv(area)
+    return radius
+
+
+def derivative_of_gaussian_radius(sigma: float, area: float) -> float:
+    if area <= 0 or area >= 1:
+        raise ValueError("`area` must be in (0, 1).")
+    radius = sqrt(2) * sigma * sqrt(log(1 / (1 - area)))
+    return radius
+
+
+def kernel_gaussian_1d(sigma: float, radius: float) -> torch.Tensor:
+    if sigma <= 0:
+        raise ValueError("Sigma must be greater than 0.")
+    size = int(ceil(radius)) * 2 + 1
     gaussian = S.windows.gaussian(size, std=sigma)
     reshaped = gaussian.reshape(1, 1, 1, -1)
     return reshaped
 
 
-def kernel_difference_1d() -> torch.Tensor:
-    kernel = torch.tensor((1, 0, -1), dtype=torch.float).reshape(1, 1, 1, -1)
-    return kernel
+def kernel_derivative_of_gaussian_1d(
+    sigma: float,
+    radius: float,
+) -> torch.Tensor:
+    def f(x: torch.Tensor) -> float:
+        numerator = x * torch.exp(x**2 / -(2 * sigma**2))
+        denominator = -sqrt(2 * pi) * sigma**3
+        value = numerator / denominator
+        return value
+    if sigma <= 0:
+        raise ValueError("Sigma must be greater than 0.")
+    iradius = int(ceil(radius))
+    xs = torch.arange(-iradius, iradius + 1)
+    kernel = f(xs)
+    reshaped = kernel.reshape(1, 1, 1, -1)
+    return reshaped
 
 
-def kernel_averaging_1d() -> torch.Tensor:
-    kernel = torch.tensor((1, 2, 1), dtype=torch.float).reshape(1, 1, 1, -1)
-    return kernel
+def gradient_suppression(
+    norm: torch.Tensor, 
+    angle: torch.Tensor
+) -> torch.Tensor:
+    arg_normalized = (angle + pi) / (2 * pi)
+    offset_a = torch.round(arg_normalized * 8).to(torch.int) % 8
+    offset_b = (offset_a + 4) % 8
+    indices = torch.stack((indices_a, indices_b))
+    window_order = [3, 6, 7, 8, 4, 2, 1, 0]
+    unwrapped = _unwrap_2d(norm, window_order)
+    data = 1
+
+
+def _unwrap_2d(tensor: torch.Tensor, window_order: list[int]) -> torch.Tensor:
+    # Assumes (1, 1, 1, 1) padding
+    b, c, h, w = tensor.shape
+    oh, ow = h-2, w-2
+    window_offsets = torch.tensor([0, 1, 2, w, w+1, w+2, 2*w, 2*w+1, 2*w+2])
+    window_order = torch.tensor(window_order, dtype=torch.int)
+    permuted_offsets = window_offsets.index_select(0, window_order)
+    indices = U.outer_sum(torch.arange(oh) * w, torch.arange(ow)).flatten()
+    indices_2d = U.outer_sum(indices, permuted_offsets)
+    data_1d = tensor.reshape(b, c, -1).index_select(2, indices_2d.flatten())
+    data_3d = data_1d.reshape(b, c, oh, ow, 8)
+    return data_3d
+
 
 #                       #
 # MORPHOLOGICAL FILTERS #
@@ -95,19 +141,6 @@ def tensor_open(tensor: torch.Tensor, radius: int) -> torch.Tensor:
 #               #
 # OTHER FILTERS #
 #               #
-
-def stretch_contrast(
-    tensor: torch.Tensor,
-    min_val: float = 0.0,
-    max_val: float = 1.0
-) -> torch.Tensor:
-    cur_min = U.gtf_min(tensor, (2, 3))
-    minned = tensor - (cur_min - min_val)
-    cur_max = U.gtf_max(minned, (2, 3))
-    maxxed = minned * (max_val / cur_max)
-    clamped = maxxed.clamp(min_val, max_val)
-    return clamped
-
 
 F_MAP = {
     "round": torch.round,

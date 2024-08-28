@@ -1,143 +1,76 @@
 import torch
-from gtf_impl import convert as C
-from gtf_impl.utils import gtf_min, gtf_max
+from ..gtf_impl import utils as U
+from ..gtf_impl import convert as CV
 
 
-class Luminance:
+class ConvertBase:
     @staticmethod
     def INPUT_TYPES():
-        return {
-            "required": {
-                "gtf": ("GTF", {}),
-            },
-        }
+        return {"required": {'gtf': ('GTF', {})}}
 
-    RETURN_TYPES = ("GTF", )
-    RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/convert"
+    RETURN_TYPES = ('GTF', )
+    RETURN_NAMES = ('gtf', )
+    CATEGORY = 'gtf/convert'
     FUNCTION = "f"
 
+
+class Luminance(ConvertBase):
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
         luminance = C.to_luminance(gtf)
         return (luminance, )
 
 
-class Min:
-    @staticmethod
-    def INPUT_TYPES():
-        return {
-            "required": {
-                "gtf": ("GTF", ),
-            }
-        }
-
-    RETURN_TYPES = ("GTF", )
-    RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/convert"
-    FUNCTION = "f"
-
+class Min(ConvertBase):
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
-        tensor_min = gtf_min(gtf, (2, 3))
+        tensor_min = U.gtf_min(gtf, (2, 3))
         return (tensor_min, )
 
 
-class Max:
-    @staticmethod
-    def INPUT_TYPES():
-        return {
-            "required": {
-                "gtf": ("GTF", ),
-            }
-        }
-
-    RETURN_TYPES = ("GTF", )
-    RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/convert"
-    FUNCTION = "f"
-
+class Max(ConvertBase):
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
-        tensor_max = gtf_max(gtf, (2, 3))
+        tensor_max = U.gtf_max(gtf, (2, 3))
         return (tensor_max, )
 
 
-class BatchMin:
-    @staticmethod
-    def INPUT_TYPES():
-        return {
-            "required": {
-                "gtf": ("GTF", ),
-            }
-        }
-
-    RETURN_TYPES = ("GTF", )
-    RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/convert"
-    FUNCTION = "f"
-
+class BatchMin(ConvertBase):
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
-        tensor_min = gtf_min(gtf, (0))
+        tensor_min = U.gtf_min(gtf, (0, ))
         return (tensor_min, )
 
 
-class BatchMax:
-    @staticmethod
-    def INPUT_TYPES():
-        return {
-            "required": {
-                "gtf": ("GTF", ),
-            }
-        }
-
-    RETURN_TYPES = ("GTF", )
-    RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/convert"
-    FUNCTION = "f"
-
+class BatchMax(ConvertBase):
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
-        tensor_max = gtf_max(gtf, (0))
+        tensor_max = U.gtf_max(gtf, (0, ))
         return (tensor_max, )
 
 
-class ChannelMin:
-    @staticmethod
-    def INPUT_TYPES():
-        return {
-            "required": {
-                "gtf": ("GTF", ),
-            }
-        }
-
-    RETURN_TYPES = ("GTF", )
-    RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/convert"
-    FUNCTION = "f"
-
+class ChannelMin(ConvertBase):
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
-        tensor_min = gtf_min(gtf, (0))
+        tensor_min = U.gtf_min(gtf, (1, ))
         return (tensor_min, )
 
 
-class ChannelMax:
-    @staticmethod
-    def INPUT_TYPES():
-        return {
-            "required": {
-                "gtf": ("GTF", ),
-            }
-        }
-
-    RETURN_TYPES = ("GTF", )
-    RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/convert"
-    FUNCTION = "f"
-
+class ChannelMax(ConvertBase):
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
-        tensor_max = gtf_max(gtf, (0))
+        tensor_max = U.gtf_max(gtf, (1, ))
         return (tensor_max, )
+
+
+NODE_CLASS_MAPPINGS = {
+    "GTF | Convert - Luminance":   Luminance,
+    "GTF | Convert - Min":         Min,
+    "GTF | Convert - Max":         Max,
+    "GTF | Convert - Batch Min":   BatchMin,
+    "GTF | Convert - Batch Max":   BatchMax,
+    "GTF | Convert - Channel Min": ChannelMin,
+    "GTF | Convert - Channel Max": ChannelMax,
+}
+
+__all__ = ["NODE_CLASS_MAPPINGS"]

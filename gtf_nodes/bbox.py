@@ -1,77 +1,67 @@
 import torch
-from gtf_impl import bbox as bb
+from .. import types as T
+from ..gtf_impl import bbox as BB
 
 
-class FromMask:
-    @staticmethod
-    def INPUT_TYPES():
-        return {"required": {
-            "mask": ("MASK", ),
-        }}
-
+class BBoxBase:
     RETURN_TYPES = ("BOUNDING_BOX", )
     RETURN_NAMES = ("bbox", )
-    CATEGORY = "gtf/bbox"
+    CATEGORY = 'gtf/bounding_box'
     FUNCTION = "f"
 
+
+class FromMask(BBoxBase):
     @staticmethod
-    def f(mask: torch.Tensor) -> tuple[torch.Tensor]:
-        mask_bbox = bb.from_mask(mask)
+    def INPUT_TYPES():
+        return {"required": {"mask": ("MASK", )}}
+
+    @staticmethod
+    def f(mask: torch.Tensor) -> tuple[T.BoundingBox]:
+        mask_bbox = BB.from_mask(mask)
         return (mask_bbox, )
 
 
-class Change:
+class Change(BBoxBase):
     @staticmethod
     def INPUT_TYPES():
         return {"required": {
-            "bbox": ("BOUNDING_BOX", ),
-            "delta_left": ("INT", {"default": 0}),
+            "bbox":        ("BOUNDING_BOX", ),
+            "delta_left":  ("INT", {"default": 0}),
             "delta_right": ("INT", {"default": 0}),
-            "delta_up": ("INT", {"default": 0}),
-            "delta_down": ("INT", {"default": 0}),
+            "delta_up":    ("INT", {"default": 0}),
+            "delta_down":  ("INT", {"default": 0}),
         }}
 
-    RETURN_TYPES = ("BOUNDING_BOX", )
-    RETURN_NAMES = ("bbox", )
-    CATEGORY = "gtf/bbox"
-    FUNCTION = "f"
-
     @staticmethod
-    def f(
-        bbox: torch.Tensor,
-        delta_left: int,
-        delta_right: int,
-        delta_up: int,
-        delta_down: int
-    ) -> tuple[torch.Tensor]:
+    def f(bbox: torch.Tensor, delta_left: int, delta_right: int, delta_up: int, delta_down: int) -> tuple[T.BoundingBox]:
         deltas = (delta_left, delta_right, delta_up, delta_down)
-        changed_bbox = bb.pad(bbox, deltas)
+        changed_bbox = BB.pad(bbox, deltas)
         return (changed_bbox, )
 
 
-class AreaScale:
+class AreaScale(BBoxBase):
     @staticmethod
     def INPUT_TYPES():
         return {"required": {
-            "bbox": ("BOUNDING_BOX", ),
+            "bbox":       ("BOUNDING_BOX", {}),
             "area_scale": ("FLOAT", {"default": 1.0, "min": 0.0}),
-            "square": ("BOOLEAN", {"default": True}),
+            "square":     ("BOOLEAN", {"default": True}),
         }}
 
-    RETURN_TYPES = ("BOUNDING_BOX", )
-    RETURN_NAMES = ("bbox", )
-    CATEGORY = "gtf/bbox"
-    FUNCTION = "f"
-
     @staticmethod
-    def f(
-        bbox: tuple[torch.Tensor, torch.Tensor],
-        area_scale: float,
-        square: bool
-    ) -> tuple[tuple[torch.Tensor, torch.Tensor]]:
+    def f(bbox: T.BoundingBox, area_scale: float, square: bool) -> tuple[T.BoundingBox]:
         wh, lrud = bbox
         if square:
-            scaled = bb.expand_lrud_square(lrud, wh, area_scale)
+            scaled = BB.expand_lrud_square(lrud, wh, area_scale)
         else:
-            scaled = bb.expand_lrud(lrud, wh, area_scale)
+            scaled = BB.expand_lrud(lrud, wh, area_scale)
         return ((wh, scaled), )
+
+
+NODE_CLASS_MAPPINGS = {
+    "BBOX | From Mask":  FromMask,
+    "BBOX | Change":     Change,
+    "BBOX | Scale Area": AreaScale,
+}
+
+__all__ = ["NODE_CLASS_MAPPINGS"]

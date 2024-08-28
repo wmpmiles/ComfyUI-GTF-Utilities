@@ -1,60 +1,39 @@
 import torch
 
 
-class Zero:
+# BASE CLASSES
+
+class SourceBase:
     @staticmethod
     def INPUT_TYPES():
-        return {
-            "required": {}
-        }
+        return {"required": {}}
 
     RETURN_TYPES = ("GTF", )
     RETURN_NAMES = ("gtf", )
     CATEGORY = "gtf/source"
     FUNCTION = "f"
 
+
+# NODES
+
+class Zero(SourceBase):
     @staticmethod
     def f() -> tuple[torch.Tensor]:
         zero = torch.zeros(1, 1, 1, 1)
         return (zero, )
 
 
-class One:
-    @staticmethod
-    def INPUT_TYPES():
-        return {
-            "required": {}
-        }
-
-    RETURN_TYPES = ("GTF", )
-    RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/source"
-    FUNCTION = "f"
-
+class One(SourceBase):
     @staticmethod
     def f() -> tuple[torch.Tensor]:
         one = torch.ones(1, 1, 1, 1)
         return (one, )
 
 
-class Value:
+class Value(SourceBase):
     @staticmethod
     def INPUT_TYPES():
-        return {
-            "required": {
-                "value": ("FLOAT", {
-                    "default": 0.0,
-                    "step": 0.0001,
-                    "min": -1_000_000,
-                    "max": 1_000_000,
-                })
-            }
-        }
-
-    RETURN_TYPES = ("GTF", )
-    RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/source"
-    FUNCTION = "f"
+        return {"required": {"value": ("FLOAT", {"default": 0.0, "step": 0.0001, "min": -1_000_000, "max": 1_000_000})}}
 
     @staticmethod
     def f(value: float) -> tuple[torch.Tensor]:
@@ -62,23 +41,26 @@ class Value:
         return (value_tensor, )
 
 
-class RGB:
+class RGB(SourceBase):
     @staticmethod
     def INPUT_TYPES():
-        return {
-            "required": {
-                "r": ("INT", {"default": 0, "min": 0, "max": 255}),
-                "g": ("INT", {"default": 0, "min": 0, "max": 255}),
-                "b": ("INT", {"default": 0, "min": 0, "max": 255}),
-            }
-        }
-
-    RETURN_TYPES = ("GTF", )
-    RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/source"
-    FUNCTION = "f"
+        return {"required": {
+            "r": ("INT", {"default": 0, "min": 0, "max": 255}),
+            "g": ("INT", {"default": 0, "min": 0, "max": 255}),
+            "b": ("INT", {"default": 0, "min": 0, "max": 255}),
+        }}
 
     @staticmethod
     def f(r: int, g: int, b: int) -> tuple[torch.Tensor]:
         rgb = torch.tensor((r, g, b)).reshape(1, 3, 1, 1).to(torch.float) / 255
         return (rgb, )
+
+
+NODE_CLASS_MAPPINGS = {
+    "GTF | Source - Zero":  Zero,
+    "GTF | Source - One":   One,
+    "GTF | Source - Value": Value,
+    "GTF | Source - RGB":   RGB,
+}
+
+__all__ = ["NODE_CLASS_MAPPINGS"]

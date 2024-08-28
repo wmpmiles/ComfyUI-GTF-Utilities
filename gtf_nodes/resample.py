@@ -1,5 +1,5 @@
 import torch
-from gtf_impl import resample as R
+from ..gtf_impl import resample as R
 
 
 def select_fn(seperable: bool):
@@ -62,8 +62,11 @@ class Triangle:
         width, height = dimensions
         filter = R.triangle_filter(radius)
         fn = select_fn(seperable)
-        resampled = fn(gtf, (height, width), radius, filter, (2, 3))
-        return (resampled, )
+
+        def function(x):
+            return fn(gtf(x), (height, width), radius, filter, (2, 3))
+
+        return (function, )
 
 
 class Lanczos:

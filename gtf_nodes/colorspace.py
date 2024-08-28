@@ -1,122 +1,67 @@
 import torch
-from gtf_impl import colorspace as cs
+from ..gtf_impl import colorspace as CS
 
 
-class SRGBGammaToLinear:
+class ColorspaceBase:
     @staticmethod
     def INPUT_TYPES():
-        return {
-            "required": {
-                "gtf": ("GTF", {}),
-            },
-        }
+        return {"required": {"gtf": ("GTF", {}), }}
 
-    RETURN_TYPES = ("GTF", )
-    RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/colorspace"
+    RETURN_TYPES = ('GTF', )
+    RETURN_NAMES = ('gtf', )
+    CATEGORY = 'gtf/colorspace'
     FUNCTION = "f"
 
+
+class SRGBGammaToLinear(ColorspaceBase):
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
-        linear = cs.srgb_gamma_to_linear(gtf)
+        linear = CS.srgb_gamma_to_linear(gtf)
         return (linear, )
 
 
-class SRGBLinearToGamma:
-    @staticmethod
-    def INPUT_TYPES():
-        return {
-            "required": {
-                "gtf": ("GTF", {}),
-            },
-        }
-
-    RETURN_TYPES = ("GTF", )
-    RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/colorspace"
-    FUNCTION = "f"
-
+class SRGBLinearToGamma(ColorspaceBase):
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
-        gamma = cs.srgb_linear_to_gamma(gtf)
+        gamma = CS.srgb_linear_to_gamma(gtf)
         return (gamma, )
 
 
-class LinearToLog:
-    @staticmethod
-    def INPUT_TYPES():
-        return {
-            "required": {
-                "gtf": ("GTF", {}),
-            },
-        }
-
-    RETURN_TYPES = ("GTF", )
-    RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/colorspace"
-    FUNCTION = "f"
-
+class LinearToLog(ColorspaceBase):
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
-        log = cs.linear_to_log(gtf, 0.0001)
+        log = CS.linear_to_log(gtf, 0.0001)
         return (log, )
 
 
-class LogToLinear:
-    @staticmethod
-    def INPUT_TYPES():
-        return {
-            "required": {
-                "gtf": ("GTF", {}),
-            },
-        }
-
-    RETURN_TYPES = ("GTF", )
-    RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/colorspace"
-    FUNCTION = "f"
-
+class LogToLinear(ColorspaceBase):
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
-        linear = cs.log_to_linear(gtf, 0.0001)
+        linear = CS.log_to_linear(gtf, 0.0001)
         return (linear, )
 
 
-class StandardGammaToLinear:
-    @staticmethod
-    def INPUT_TYPES():
-        return {
-            "required": {
-                "gtf": ("GTF", {}),
-            },
-        }
-
-    RETURN_TYPES = ("GTF", )
-    RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/colorspace"
-    FUNCTION = "f"
-
+class StandardGammaToLinear(ColorspaceBase):
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
-        linear = cs.standard_gamma_to_linear(gtf)
+        linear = CS.standard_gamma_to_linear(gtf)
         return (linear, )
 
 
-class StandardLinearToGamma:
-    @staticmethod
-    def INPUT_TYPES():
-        return {
-            "required": {
-                "gtf": ("GTF", {}),
-            },
-        }
-
-    RETURN_TYPES = ("GTF", )
-    RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/colorspace"
-    FUNCTION = "f"
-
+class StandardLinearToGamma(ColorspaceBase):
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
-        linear = cs.standard_linear_to_gamma(gtf)
+        linear = CS.standard_linear_to_gamma(gtf)
         return (linear, )
+
+
+NODE_CLASS_MAPPINGS = {
+    "GTF | Colorspace - SRGB Linear to Gamma":     SRGBLinearToGamma,
+    "GTF | Colorspace - SRGB Gamma to Linear":     SRGBGammaToLinear,
+    "GTF | Colorspace - Linear to Log":            LinearToLog,
+    "GTF | Colorspace - Log to Linear":            LogToLinear,
+    "GTF | Colorspace - Standard Linear to Gamma": StandardLinearToGamma,
+    "GTF | Colorspace - Standard Gamma to Linear": StandardGammaToLinear,
+}
+
+__all__ = ["NODE_CLASS_MAPPINGS"]
