@@ -60,7 +60,9 @@ def _window_lengths(
     L: int,
     radius: int,
 ) -> int:
-    if L <= l:
+    if radius == 0:
+        w, W = 1, 1
+    elif L <= l:
         W = 2 * radius
         w = -((-l * W) // L)
     else:
@@ -77,7 +79,9 @@ def _padding_1d(
     W: int,
     w: int,
 ) -> torch.Tensor:
-    if L <= l:
+    if w == 1 and W == 1:
+        p = i_snn * 0
+    elif L <= l:
         p = (W * l + L * (2 * i_snn + 1) - l * (2 * I_t + 1)) // (2 * L)
     else:
         c = l * (2 * I_t + 1) > L * (2 * i_snn + 1)
@@ -124,6 +128,7 @@ def _data_values_1d(
     return d_2d
 
 
+# Full filter pass for reference
 def _filter_1d(
     d_s: torch.Tensor,
     L: int,
@@ -142,6 +147,35 @@ def _filter_1d(
     d_p = U.pad_tensor_reflect(d_s, dim, p_0, p_0 + 1)
     d_2d = _data_values_1d(d_p, i_snn, i_w, p, p_0, L, w, dim)
     f = filter(x_values)
+    f_n = U.sum_normalize(f, (1,))
+    shape = [1] * d_2d.dim()
+    shape[dim] = L
+    shape[dim+1] = w
+    d_f = d_2d * f_n.reshape(*shape)
+    d_r = d_f.sum(dim+1)
+    return d_r
+
+
+def x_values_1d(l: int, L: int, radius: int) -> torch.Tensor:
+    (w, W) = _window_lengths(l, L, radius)
+    I_t = torch.arange(L)
+    i_snn = _nearest_neighbor_indices(I_t, l, L)
+    p = _padding_1d(i_snn, I_t, l, L, W, w)
+    i_w = torch.arange(w)
+    x_values = _x_values_1d(i_snn, i_w, I_t, l, L, p)
+    return x_values
+
+
+def filter_1d(d_s: torch.Tensor, f: torch.Tensor, L: int, radius: int, dim: int) -> torch.Tensor:
+    l = int(d_s.shape[dim])
+    (w, W) = _window_lengths(l, L, radius)
+    I_t = torch.arange(L)
+    i_snn = _nearest_neighbor_indices(I_t, l, L)
+    p = _padding_1d(i_snn, I_t, l, L, W, w)
+    i_w = torch.arange(w)
+    p_0 = int(p[0])
+    d_p = U.pad_tensor_reflect(d_s, dim, p_0, p_0 + 1)
+    d_2d = _data_values_1d(d_p, i_snn, i_w, p, p_0, L, w, dim)
     f_n = U.sum_normalize(f, (1,))
     shape = [1] * d_2d.dim()
     shape[dim] = L
@@ -201,14 +235,13 @@ def _data_values_2d(
     return d_4d
 
 
-def filter_2d(
+def _filter_2d(
     d_s: torch.Tensor,
     L: tuple[int, int],
     radius: int,
     filter: Callable[[torch.Tensor], torch.Tensor],
     dim: tuple[int, int] = (0, 1),
 ) -> torch.Tensor:
-    W = [2 * radius, 2 * radius]
     l = (int(d_s.shape[dim[0]]), int(d_s.shape[dim[1]]))
     (w, W) = tuple(zip(
         _window_lengths(l[0], L[0], radius),
@@ -235,6 +268,38 @@ def filter_2d(
     l_p = (int(d_p.shape[dim[0]]), int(d_p.shape[dim[1]]))
     d_4d = _data_values_2d(d_p, i_snn, p, i_w, p0, w, L, l_p, dim)
     f = filter(X_w2)
+    f_n = U.sum_normalize(f, (2, 3))
+    shape = [1] * d_4d.dim()
+    shape[dim[0]] = L[0]
+    shape[dim[1]] = L[1]
+    shape[-2] = w[0]
+    shape[-1] = w[1]
+    d_f = d_4d * f_n.reshape(*shape)
+    d_r = d_f.sum(-1).sum(-1)
+    return d_r
+
+
+def filter_2d(d_s: torch.Tensor, f: torch.Tensor, L: tuple[int, int], radius: int, dim: tuple[int, int]) -> torch.Tensor:
+    l = (int(d_s.shape[dim[0]]), int(d_s.shape[dim[1]]))
+    (w, W) = tuple(zip(
+        _window_lengths(l[0], L[0], radius),
+        _window_lengths(l[1], L[1], radius)
+    ))
+    I_t = (torch.arange(L[0]), torch.arange(L[1]))
+    i_snn = (
+        _nearest_neighbor_indices(I_t[0], l[0], L[0]),
+        _nearest_neighbor_indices(I_t[1], l[1], L[1])
+    )
+    p = (
+        _padding_1d(i_snn[0], I_t[0], l[0], L[0], W[0], w[0]),
+        _padding_1d(i_snn[1], I_t[1], l[1], L[1], W[1], w[0])
+    )
+    i_w = (torch.arange(w[0]), torch.arange(w[1]))
+    p0 = (int(p[0][0]), int(p[1][0]))
+    d_p = U.pad_tensor_reflect(d_s, dim[0], p0[0], p0[0] + 1)
+    d_p = U.pad_tensor_reflect(d_p, dim[1], p0[1], p0[1] + 1)
+    l_p = (int(d_p.shape[dim[0]]), int(d_p.shape[dim[1]]))
+    d_4d = _data_values_2d(d_p, i_snn, p, i_w, p0, w, L, l_p, dim)
     f_n = U.sum_normalize(f, (2, 3))
     shape = [1] * d_4d.dim()
     shape[dim[0]] = L[0]

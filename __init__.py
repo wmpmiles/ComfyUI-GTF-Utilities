@@ -19,16 +19,13 @@ NODE_CLASS_MAPPINGS = {
     **logic.NODE_CLASS_MAPPINGS,
     **math.NODE_CLASS_MAPPINGS,
     **primitive.NODE_CLASS_MAPPINGS,
+    **resample.NODE_CLASS_MAPPINGS,
     **source.NODE_CLASS_MAPPINGS,
+    **special.NODE_CLASS_MAPPINGS,
     **tonemap.NODE_CLASS_MAPPINGS,
     **transform.NODE_CLASS_MAPPINGS,
     **trigonometry.NODE_CLASS_MAPPINGS,
-    # Resample
-    "GTF | Resample - Nearest Neighbor":   resample.NearestNeighbor,
-    "GTF | Resample - Area":               resample.Area,
-    "GTF | Resample - Triangle":           resample.Triangle,
-    "GTF | Resample - Mitchell-Netravali": resample.MitchellNetravali,
-    "GTF | Resample - Lanczos":            resample.Lanczos,
+    **window.NODE_CLASS_MAPPINGS,
 }
 
 

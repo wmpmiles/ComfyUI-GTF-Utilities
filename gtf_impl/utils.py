@@ -1,6 +1,5 @@
 import torch
 from typing import Iterable
-from math import pi, sqrt
 
 
 def round_up_to_mult_of(number: int, mult_of: int) -> int:
@@ -77,28 +76,3 @@ def range_normalize(
     maxxed = minned / cur_max
     clamped = maxxed.clamp(0, 1)
     return clamped
-
-
-
-# RAW FUNCTIONS
-
-def jinc(x: torch.Tensor) -> torch.Tensor:
-    p0: torch.Tensor = (2 / pi) * torch.special.bessel_j1(pi * x) / x
-    j = p0.where(x != 0, 1)
-    return j
-
-
-def gaussian(x: torch.Tensor, sigma: torch.Tensor) -> torch.Tensor:
-    sigma_r = torch.reciprocal(sigma)
-    coef = sigma_r / sqrt(2 * pi)
-    g = coef * torch.exp(-0.5 * x**2 * sigma_r**2)
-    return g
-
-
-def derivative_of_gaussian(
-    x: torch.Tensor, sigma: torch.Tensor
-) -> torch.Tensor:
-    sigma_r = torch.reciprocal(sigma)
-    coef = sigma_r**3 / sqrt(2 * pi)
-    dog = coef * x * torch.exp(-0.5 * x**2 / sigma_r**2)
-    return dog

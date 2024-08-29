@@ -103,7 +103,7 @@ class Uncharted2(TonemapBase):
         return (tonemapped, )
 
 
-class ACES:
+class ACES(TonemapBase):
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
         tonemapped = TM.aces(gtf)

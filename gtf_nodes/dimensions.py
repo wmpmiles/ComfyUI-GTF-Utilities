@@ -18,7 +18,7 @@ class FromGTF(DimensionsBase):
 
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[T.Dimensions]:
-        _, _, h, w = gtf.shape
+        h, w = gtf.shape[2], gtf.shape[3]
         dimensions = (w, h)
         return (dimensions, )
 
@@ -103,7 +103,7 @@ class FromRaw(DimensionsBase):
         return ((width, height), )
 
 
-class ToRaw:
+class ToRaw(DimensionsBase):
     @staticmethod
     def INPUT_TYPES():
         return {"required": {"dimensions": ("DIMENSIONS", {})}}

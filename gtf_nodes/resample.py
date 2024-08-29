@@ -1,161 +1,82 @@
 import torch
-from ..gtf_impl import resample as R
+from .. import types as T
+from ..gtf_impl import resample as RS
 
 
-def select_fn(seperable: bool):
-    if seperable:
-        return R.filter_2d_seperable
-    else:
-        return R.filter_2d
+# BASE CLASSES
 
-
-class NearestNeighbor:
-    @classmethod
-    def INPUT_TYPES(s):
-        return {
-            "required": {
-                "gtf": ("GTF", {}),
-                "dimensions": ("DIM", {}),
-            },
-        }
-
+class ResampleBase:
     RETURN_TYPES = ("GTF", )
     RETURN_NAMES = ("gtf", )
     CATEGORY = "gtf/resample"
     FUNCTION = "f"
 
+
+# NODES
+
+class ResampleCoords(ResampleBase):
     @staticmethod
-    def f(
-        gtf: torch.Tensor,
-        dimensions: tuple[int, int],
-    ) -> tuple[torch.Tensor]:
-        width, height = dimensions
-        resampled = \
-            R.nearest_neighbor_2d(gtf, (height, width), (2, 3))
+    def INPUT_TYPES():
+        return {"required": {
+            "old_dimensions": ("DIMENSIONS", {}),
+            "new_dimensions": ("DIMENSIONS", {}),
+            "radius": ("INT", {"min": 0, "default": 1}),
+        }}
+
+    RETURN_TYPES = ("GTF", "GTF")
+    RETURN_NAMES = ("gtf_x", "gtf_y")
+
+    @staticmethod
+    def f(old_dimensions: T.Dimensions, new_dimensions: T.Dimensions, radius: int) -> tuple[torch.Tensor, torch.Tensor]:
+        old_width, old_height = old_dimensions
+        new_width, new_height = new_dimensions
+        xs = RS.x_values_1d(old_width, new_width, radius)
+        ys = RS.x_values_1d(old_height, new_height, radius)
+        xl, xw = xs.shape
+        yl, yw = ys.shape
+        coords = (xs.reshape(1, 1, 1, xl, 1, xw), ys.reshape(1, 1, yl, 1, yw, 1))
+        return (*coords, )
+
+
+class ResampleSeparable(ResampleBase):
+    @staticmethod
+    def INPUT_TYPES():
+        return {"required": {
+            "gtf": ("GTF", {}),
+            "gtf_filter_x": ("GTF", {}),
+            "gtf_filter_y": ("GTF", {}),
+            "radius": ("INT", {"min": 0, "default": 1}),
+        }}
+
+    @staticmethod
+    def f(gtf: torch.Tensor, gtf_filter_x: torch.Tensor, gtf_filter_y: torch.Tensor, radius: int) -> tuple[torch.Tensor]:
+        _, _, _, xl, _, xw = gtf_filter_x.shape
+        _, _, yl, _, yw, _ = gtf_filter_y.shape
+        resampled_x = RS.filter_1d(gtf, gtf_filter_x.reshape(xl, xw), xl, radius, 3)
+        resampled_xy = RS.filter_1d(resampled_x, gtf_filter_y.reshape(yl, yw), yl, radius, 2)
+        return (resampled_xy, )
+
+
+class Resample2D(ResampleBase):
+    @staticmethod
+    def INPUT_TYPES():
+        return {"required": {
+            "gtf": ("GTF", {}),
+            "gtf_filter": ("GTF", {}),
+            "radius": ("INT", {"min": 0, "default": 1}),
+        }}
+
+    @staticmethod
+    def f(gtf: torch.Tensor, gtf_filter: torch.Tensor, radius: int) -> tuple[torch.Tensor]:
+        _, _, yl, xl, _, _ = gtf_filter.shape
+        resampled = RS.filter_2d(gtf, gtf_filter.squeeze(), (yl, xl), radius, (2, 3))
         return (resampled, )
 
 
-class Triangle:
-    @classmethod
-    def INPUT_TYPES(s):
-        return {
-            "required": {
-                "gtf": ("GTF", {}),
-                "dimensions": ("DIM", {}),
-                "radius": ("INT", {"default": 1, "min": 1}),
-                "seperable": ("BOOLEAN", {"default": True}),
-            },
-        }
+NODE_CLASS_MAPPINGS = {
+    "GTF | Resample - Coords": ResampleCoords,
+    "GTF | Resample - Separable": ResampleSeparable,
+    "GTF | Resample - 2D": Resample2D,
+}
 
-    RETURN_TYPES = ("GTF", )
-    RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/resample"
-    FUNCTION = "f"
-
-    @staticmethod
-    def f(
-        gtf: torch.Tensor,
-        dimensions: tuple[int, int],
-        radius: int,
-        seperable: bool,
-    ) -> tuple[torch.Tensor]:
-        width, height = dimensions
-        filter = R.triangle_filter(radius)
-        fn = select_fn(seperable)
-
-        def function(x):
-            return fn(gtf(x), (height, width), radius, filter, (2, 3))
-
-        return (function, )
-
-
-class Lanczos:
-    @classmethod
-    def INPUT_TYPES(s):
-        return {
-            "required": {
-                "gtf": ("GTF", {}),
-                "dimensions": ("DIM", {}),
-                "radius": ("INT", {"default": 4, "min": 1}),
-                "seperable": ("BOOLEAN", {"default": True}),
-            },
-        }
-
-    RETURN_TYPES = ("GTF", )
-    RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/resample"
-    FUNCTION = "f"
-
-    @staticmethod
-    def f(
-        gtf: torch.Tensor,
-        dimensions: tuple[int, int],
-        radius: int,
-        seperable: bool,
-    ) -> tuple[torch.Tensor]:
-        width, height = dimensions
-        filter = R.lanczos_filter(radius)
-        fn = select_fn(seperable)
-        resampled = fn(gtf, (height, width), radius, filter, (2, 3))
-        return (resampled, )
-
-
-class MitchellNetravali:
-    @classmethod
-    def INPUT_TYPES(s):
-        return {
-            "required": {
-                "gtf": ("GTF", {}),
-                "dimensions": ("DIM", {}),
-                "b": ("FLOAT",
-                      {"default": 0.33, "min": 0, "max": 1, "step": 0.01}),
-                "c": ("FLOAT",
-                      {"default": 0.33, "min": 0, "max": 1, "step": 0.01}),
-                "seperable": ("BOOLEAN", {"default": True}),
-            },
-        }
-
-    RETURN_TYPES = ("GTF", )
-    RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/resample"
-    FUNCTION = "f"
-
-    @staticmethod
-    def f(
-        gtf: torch.Tensor,
-        dimensions: tuple[int, int],
-        b: float,
-        c: float,
-        seperable: bool
-    ) -> tuple[torch.Tensor]:
-        width, height = dimensions
-        filter = R.mitchell_netravali_filter(b, c)
-        fn = select_fn(seperable)
-        radius = R.mitchell_netravali_radius()
-        resampled = fn(gtf, (height, width), radius, filter, (2, 3))
-        return (resampled, )
-
-
-class Area:
-    @classmethod
-    def INPUT_TYPES(s):
-        return {
-            "required": {
-                "gtf": ("GTF", {}),
-                "dimensions": ("DIM", {}),
-            },
-        }
-
-    RETURN_TYPES = ("GTF", )
-    RETURN_NAMES = ("gtf", )
-    CATEGORY = "gtf/resample"
-    FUNCTION = "f"
-
-    @staticmethod
-    def f(
-        gtf: torch.Tensor,
-        dimensions: tuple[int, int]
-    ) -> tuple[torch.Tensor]:
-        width, height = dimensions
-        resampled = R.area_2d(gtf, (height, width), (2, 3))
-        return (resampled, )
+__all__ = ["NODE_CLASS_MAPPINGS"]

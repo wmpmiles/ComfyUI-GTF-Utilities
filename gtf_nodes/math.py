@@ -69,6 +69,13 @@ class Negate(MathBase1To1):
         return (negated, )
 
 
+class Absolute(MathBase1To1):
+    @staticmethod
+    def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
+        absolute = torch.abs(gtf)
+        return (absolute, )
+
+
 class Lerp(MathBase):
     @staticmethod
     def INPUT_TYPES():
@@ -107,6 +114,7 @@ NODE_CLASS_MAPPINGS = {
     "GTF | Math - Negative":   Negate,
     "GTF | Math - Lerp":       Lerp,
     "GTF | Math - Pow":        Pow,
+    "GTF | Math - Absolute":   Absolute,
 }
 
 __all__ = ["NODE_CLASS_MAPPINGS"]

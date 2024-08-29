@@ -78,7 +78,7 @@ class Convolve(FilterBase):
         return (convolved, )
 
 
-class MorphologicalFilter:
+class MorphologicalFilter(FilterBase):
     @staticmethod
     def INPUT_TYPES():
         return {"required": {

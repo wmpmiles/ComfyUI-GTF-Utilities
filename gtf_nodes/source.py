@@ -6,7 +6,9 @@ import torch
 class SourceBase:
     @staticmethod
     def INPUT_TYPES():
-        return {"required": {}}
+        return {"required": {
+            "gtf": ("GTF", {}),
+        }}
 
     RETURN_TYPES = ("GTF", )
     RETURN_NAMES = ("gtf", )
@@ -18,41 +20,46 @@ class SourceBase:
 
 class Zero(SourceBase):
     @staticmethod
-    def f() -> tuple[torch.Tensor]:
-        zero = torch.zeros(1, 1, 1, 1)
+    def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
+        zero = torch.zeros_like(gtf)
         return (zero, )
 
 
 class One(SourceBase):
     @staticmethod
-    def f() -> tuple[torch.Tensor]:
-        one = torch.ones(1, 1, 1, 1)
+    def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
+        one = torch.ones_like(gtf)
         return (one, )
 
 
 class Value(SourceBase):
     @staticmethod
     def INPUT_TYPES():
-        return {"required": {"value": ("FLOAT", {"default": 0.0, "step": 0.0001, "min": -1_000_000, "max": 1_000_000})}}
+        return {"required": {
+            "gtf": ("GTF", {}),
+            "value": ("FLOAT", {"default": 0.0, "step": 0.0001, "min": -1_000_000, "max": 1_000_000})
+        }}
 
     @staticmethod
-    def f(value: float) -> tuple[torch.Tensor]:
-        value_tensor = torch.tensor(value).reshape(1, 1, 1, 1)
-        return (value_tensor, )
+    def f(gtf: torch.Tensor, value: float) -> tuple[torch.Tensor]:
+        values = torch.ones_like(gtf) * value
+        return (values, )
 
 
 class RGB(SourceBase):
     @staticmethod
     def INPUT_TYPES():
         return {"required": {
+            "gtf": ("GTF", {}),
             "r": ("INT", {"default": 0, "min": 0, "max": 255}),
             "g": ("INT", {"default": 0, "min": 0, "max": 255}),
             "b": ("INT", {"default": 0, "min": 0, "max": 255}),
         }}
 
     @staticmethod
-    def f(r: int, g: int, b: int) -> tuple[torch.Tensor]:
-        rgb = torch.tensor((r, g, b)).reshape(1, 3, 1, 1).to(torch.float) / 255
+    def f(gtf: torch.Tensor, r: int, g: int, b: int) -> tuple[torch.Tensor]:
+        b, _, h, w = gtf.shape
+        rgb = (torch.tensor((r, g, b)).to(torch.float) / 255).reshape(1, 3, 1, 1).expand(b, -1, h, w)
         return (rgb, )
 
 

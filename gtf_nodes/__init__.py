@@ -10,9 +10,11 @@ from ..gtf_nodes import math
 from ..gtf_nodes import primitive
 from ..gtf_nodes import resample
 from ..gtf_nodes import source
+from ..gtf_nodes import special
 from ..gtf_nodes import tonemap
 from ..gtf_nodes import transform
 from ..gtf_nodes import trigonometry
+from ..gtf_nodes import window
 
 __all__ = [
 	"bbox",
@@ -27,7 +29,9 @@ __all__ = [
 	"primitive",
 	"resample",
 	"source",
+	"special",
 	"tonemap",
 	"transform",
 	"trigonometry",
+	"window",
 ]
