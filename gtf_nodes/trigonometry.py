@@ -58,14 +58,28 @@ class Atan2(TrigBase):
     @staticmethod
     def INPUT_TYPES():
         return {"required": {
-            "gtf_opposite": ("GTF", {}),
-            "gtf_adjacent": ("GTF", {}),
+            "gtf_x": ("GTF", {}),
+            "gtf_y": ("GTF", {}),
         }}
 
     @staticmethod
-    def f(gtf_opposite: torch.Tensor, gtf_adjacent: torch.Tensor) -> tuple[torch.Tensor]:
-        atan2 = torch.atan2(gtf_opposite, gtf_adjacent)
+    def f(gtf_x: torch.Tensor, gtf_y: torch.Tensor) -> tuple[torch.Tensor]:
+        atan2 = torch.atan2(gtf_y, gtf_x).nan_to_num()
         return (atan2, )
+
+
+class Hypot(TrigBase):
+    @staticmethod
+    def INPUT_TYPES():
+        return {"required": {
+            "gtf_x": ("GTF", {}),
+            "gtf_y": ("GTF", {}),
+        }}
+
+    @staticmethod
+    def f(gtf_x: torch.Tensor, gtf_y: torch.Tensor) -> tuple[torch.Tensor]:
+        hypot = torch.hypot(gtf_x, gtf_y)
+        return (hypot, )
 
 
 NODE_CLASS_MAPPINGS = {
@@ -76,4 +90,7 @@ NODE_CLASS_MAPPINGS = {
     "GTF | Trig - Acos":  Acos,
     "GTF | Trig - Atan":  Atan,
     "GTF | Trig - Atan2": Atan2,
+    "GTF | Trig - Hypot": Hypot,
 }
+
+__all__ = ["NODE_CLASS_MAPPINGS"]

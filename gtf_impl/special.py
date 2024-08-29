@@ -11,17 +11,15 @@ def jinc(x: torch.Tensor) -> torch.Tensor:
     return j
 
 
-def gaussian(x: torch.Tensor, sigma: torch.Tensor) -> torch.Tensor:
-    sigma_r = torch.reciprocal(sigma)
-    coef = sigma_r / sqrt(2 * pi)
-    g = coef * torch.exp(-0.5 * x**2 * sigma_r**2)
+def gaussian(x: torch.Tensor, sigma: float) -> torch.Tensor:
+    coef = 1 / (sigma * sqrt(2 * pi))
+    g = coef * torch.exp(x**2 / (-2 * sigma**2))
     return g
 
 
-def derivative_of_gaussian(x: torch.Tensor, sigma: torch.Tensor) -> torch.Tensor:
-    sigma_r = torch.reciprocal(sigma)
-    coef = sigma_r**3 / sqrt(2 * pi)
-    dog = coef * x * torch.exp(-0.5 * x**2 / sigma_r**2)
+def derivative_of_gaussian(x: torch.Tensor, sigma: float) -> torch.Tensor:
+    coef = -1 / (sigma**3 * sqrt(2 * pi))
+    dog = coef * x * torch.exp(x**2 / (-2 * sigma**2))
     return dog
 
 

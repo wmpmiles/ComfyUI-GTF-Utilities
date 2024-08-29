@@ -91,6 +91,43 @@ class Lerp(MathBase):
         return (lerped, )
 
 
+class CartesianToPolar(MathBase):
+    @staticmethod
+    def INPUT_TYPES():
+        return {"required": {
+            "gtf_x": ("GTF", {}),
+            "gtf_y": ("GTF", {}),
+        }}
+
+    RETURN_TYPES = ("GTF", "GTF")
+    RETURN_NAMES = ("gtf_r", "gtf_theta")
+
+    @staticmethod
+    def f(gtf_x: torch.Tensor, gtf_y: torch.Tensor) -> tuple[torch.Tensor]:
+        r = torch.hypot(gtf_x, gtf_y)
+        theta = torch.atan2(gtf_y, gtf_x).nan_to_num()
+
+        return (r, theta)
+
+
+class PolarToCartesian(MathBase):
+    @staticmethod
+    def INPUT_TYPES():
+        return {"required": {
+            "gtf_r": ("GTF", {}),
+            "gtf_theta": ("GTF", {}),
+        }}
+
+    RETURN_TYPES = ("GTF", "GTF")
+    RETURN_NAMES = ("gtf_x", "gtf_y")
+
+    @staticmethod
+    def f(gtf_r: torch.Tensor, gtf_theta: torch.Tensor) -> tuple[torch.Tensor]:
+        x = gtf_r * torch.cos(gtf_theta)
+        y = gtf_r * torch.sin(gtf_theta)
+        return (x, y)
+
+
 class Pow(MathBase):
     @staticmethod
     def INPUT_TYPES():
@@ -115,6 +152,8 @@ NODE_CLASS_MAPPINGS = {
     "GTF | Math - Lerp":       Lerp,
     "GTF | Math - Pow":        Pow,
     "GTF | Math - Absolute":   Absolute,
+    "GTF | Math - Cartesian to Polar": CartesianToPolar,
+    "GTF | Math - Polar to Cartesian": PolarToCartesian,
 }
 
 __all__ = ["NODE_CLASS_MAPPINGS"]

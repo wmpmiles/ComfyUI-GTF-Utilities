@@ -16,6 +16,25 @@ class SourceBase:
     FUNCTION = "f"
 
 
+class KernelBase(SourceBase):
+    @staticmethod
+    def INPUT_TYPES():
+        return {"required": {
+            "radius": ("INT", {"min": 0, "default": 1})
+        }}
+
+    RETURN_TYPES = ("GTF", )
+    # Define RETURN_NAMES and SHAPE to finish class
+
+    @classmethod
+    def f(cls, radius: int) -> tuple[torch.Tensor]:
+        width = 2 * radius + 1
+        indices = torch.arange(width)
+        offset = indices - radius
+        reshaped = offset.reshape(*cls.SHAPE)
+        return (reshaped, )
+
+
 # NODES
 
 class Zero(SourceBase):
@@ -63,11 +82,25 @@ class RGB(SourceBase):
         return (rgb, )
 
 
+class KernelX(KernelBase):
+    RETURN_NAMES = ("gtf_kernel_x", )
+    SHAPE = (1, 1, 1, -1)
+
+
+class KernelY(KernelBase):
+    RETURN_NAMES = ("gtf_kernel_y", )
+    SHAPE = (1, 1, -1, 1)
+
+
+# MAPPING
+
 NODE_CLASS_MAPPINGS = {
     "GTF | Source - Zero":  Zero,
     "GTF | Source - One":   One,
     "GTF | Source - Value": Value,
     "GTF | Source - RGB":   RGB,
+    "GTF | Source - Kernel X": KernelX,
+    "GTF | Source - Kernel Y": KernelY,
 }
 
 __all__ = ["NODE_CLASS_MAPPINGS"]

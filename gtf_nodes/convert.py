@@ -17,7 +17,7 @@ class ConvertBase:
 class Luminance(ConvertBase):
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
-        luminance = C.to_luminance(gtf)
+        luminance = CV.to_luminance(gtf)
         return (luminance, )
 
 

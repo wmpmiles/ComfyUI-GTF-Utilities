@@ -19,26 +19,15 @@ def convolve_2d(tensor: torch.Tensor, kernel: torch.Tensor) -> torch.Tensor:
     if kc != 1 and kc != c:
         raise ValueError("A kernel with more than 1 channel must have the \
                          same number of chdannels as the GTF.")
+    kernel_expanded = kernel.expand(b, c, -1, -1)
     ph, pw = kh // 2, kw // 2
-    kernel_reshaped = kernel.reshape(kb, kc, 1, 1, kh, kw)
     padded_h = U.pad_tensor_reflect(tensor, 2, ph, ph)
     padded = U.pad_tensor_reflect(padded_h, 3, pw, pw)
-    unfolded = _unfold_2d(padded, kh, kw)
-    multiplied = unfolded * kernel_reshaped
-    convolved = multiplied.sum(-1).sum(-1)
-    return convolved
-
-
-def _unfold_2d(tensor: torch.Tensor, kh: int, kw: int) -> torch.Tensor:
-    b, c, h, w = tensor.shape
-    oh, ow = h - kh + 1, w - kw + 1
-    window_offsets = U.outer_sum(torch.arange(kh) * w, torch.arange(kw))
-    indices_2d = U.outer_sum(torch.arange(oh) * w, torch.arange(ow))
-    indices_4d = window_offsets.reshape(1, 1, kh, kw) \
-        + indices_2d.reshape(oh, ow, 1, 1)
-    data_1d = tensor.reshape(b, c, -1).index_select(2, indices_4d.flatten())
-    data_4d = data_1d.reshape(b, c, oh, ow, kh, kw)
-    return data_4d
+    convolved = []
+    for (b, k) in zip(padded, kernel_expanded):
+        convolved += [F.conv2d(b.unsqueeze(0), k.unsqueeze(1), groups=c)]
+    concatenated = torch.cat(convolved)
+    return concatenated
 
 
 def gradient_suppression(

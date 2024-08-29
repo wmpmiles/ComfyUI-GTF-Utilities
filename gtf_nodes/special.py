@@ -33,6 +33,7 @@ class Jinc(SpecialBase):
 
 
 class Gaussian(SpecialBase):
+    @staticmethod
     def INPUT_TYPES():
         return {"required": {
             "gtf": ("GTF", {}),
@@ -46,6 +47,7 @@ class Gaussian(SpecialBase):
 
 
 class DerivativeOfGaussian(SpecialBase):
+    @staticmethod
     def INPUT_TYPES():
         return {"required": {
             "gtf": ("GTF", {}),
@@ -59,6 +61,7 @@ class DerivativeOfGaussian(SpecialBase):
 
 
 class GaussianAreaRadius(SpecialBase):
+    @staticmethod
     def INPUT_TYPES():
         return {"required": {
             "sigma": ("FLOAT", {"default": 1, "min": 0.001, "step": 0.001}),
@@ -68,12 +71,14 @@ class GaussianAreaRadius(SpecialBase):
     RETURN_TYPES = ("INT", )
     RETURN_NAMES = ("radius", )
 
+    @staticmethod
     def f(sigma: float, area: float) -> tuple[int]:
         radius = int(ceil(SP.gaussian_area_radius(sigma, area)))
         return (radius, )
 
 
 class DerivativeOfGaussianAreaRadius(SpecialBase):
+    @staticmethod
     def INPUT_TYPES():
         return {"required": {
             "sigma": ("FLOAT", {"default": 1, "min": 0.001, "step": 0.001}),
@@ -83,6 +88,7 @@ class DerivativeOfGaussianAreaRadius(SpecialBase):
     RETURN_TYPES = ("INT", )
     RETURN_NAMES = ("radius", )
 
+    @staticmethod
     def f(sigma: float, area: float) -> tuple[int]:
         radius = int(ceil(SP.derivative_of_gaussian_area_radius(sigma, area)))
         return (radius, )

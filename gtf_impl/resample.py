@@ -235,6 +235,7 @@ def _data_values_2d(
     return d_4d
 
 
+# Full filter pass for reference
 def _filter_2d(
     d_s: torch.Tensor,
     L: tuple[int, int],
