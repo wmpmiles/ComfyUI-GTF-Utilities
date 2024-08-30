@@ -76,3 +76,7 @@ def range_normalize(
     maxxed = minned / cur_max
     clamped = maxxed.clamp(0, 1)
     return clamped
+
+
+def ztn(value: int) -> int | None:
+    return None if value == 0 else value

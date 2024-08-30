@@ -1,6 +1,7 @@
 import torch
 from ..gtf_impl import utils as U
 from ..gtf_impl import filters as FT
+from ..gtf_impl import transform as TF
 
 
 class FilterBase:
@@ -49,6 +50,33 @@ class BinaryThreshold(FilterBase):
         return (thresholded, )
 
 
+class HysteresisThreshold(FilterBase):
+    @staticmethod
+    def INPUT_TYPES():
+        return {"required": {
+            'gtf': ('GTF', ),
+            "threshold": ("FLOAT", {"default": 0.5, "step": 0.001}),
+        }}
+
+    @staticmethod
+    def f(gtf: torch.Tensor, threshold: float) -> tuple[torch.Tensor]:
+        b, c, h, w = gtf.shape
+        coloring, max_unique = TF.component_coloring(gtf, True)
+        strong_components = coloring * (gtf >= threshold)
+        batches = []
+        for bi in range(b):
+            channels = []
+            for ci in range(c):
+                strong = torch.zeros(max_unique + 1)
+                strong[strong_components[bi, ci].flatten()] = 1
+                strong[0] = 0
+                result = strong.index_select(0, coloring[bi, ci].flatten()).reshape(h, w)
+                channels += [result]
+            batches += [torch.stack(channels)]
+        thresholded = torch.stack(batches)
+        return (thresholded, )
+
+
 class Quantize(FilterBase):
     @staticmethod
     def INPUT_TYPES():
@@ -78,6 +106,20 @@ class Convolve(FilterBase):
         return (convolved, )
 
 
+class GradientNMSMask(FilterBase):
+    @staticmethod
+    def INPUT_TYPES():
+        return {"required": {
+            "gtf_r": ("GTF", {}),
+            "gtf_theta": ("GTF", {}),
+        }}
+
+    @staticmethod
+    def f(gtf_r: torch.Tensor, gtf_theta: torch.Tensor) -> tuple[torch.Tensor]:
+        mask = FT.gradient_suppression_mask(gtf_r, gtf_theta)
+        return (mask, )
+
+
 class MorphologicalFilter(FilterBase):
     @staticmethod
     def INPUT_TYPES():
@@ -105,6 +147,8 @@ class MorphologicalFilter(FilterBase):
 
 NODE_CLASS_MAPPINGS = {
     "GTF | Filter - Convolve":         Convolve,
+    "GTF | Filter - Gradient NMS Mask": GradientNMSMask,
+    "GTF | Filter - Hysteresis Threshold": HysteresisThreshold,
     "GTF | Filter - Sum Normalize":    SumNormalize,
     "GTF | Filter - Range Normalize":  RangeNormalize,
     "GTF | Filter - Invert":           Invert,

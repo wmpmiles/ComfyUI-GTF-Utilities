@@ -30,31 +30,27 @@ def convolve_2d(tensor: torch.Tensor, kernel: torch.Tensor) -> torch.Tensor:
     return concatenated
 
 
-def gradient_suppression(
+def gradient_suppression_mask(
     norm: torch.Tensor, 
     angle: torch.Tensor
 ) -> torch.Tensor:
-    arg_normalized = (angle + pi) / (2 * pi)
-    offset_a = torch.round(arg_normalized * 8).to(torch.int) % 8
-    offset_b = (offset_a + 4) % 8
-    indices = torch.stack((indices_a, indices_b))
-    window_order = [3, 6, 7, 8, 4, 2, 1, 0]
-    unwrapped = _unwrap_2d(norm, window_order)
-    data = 1
-
-
-def _unwrap_2d(tensor: torch.Tensor, window_order: list[int]) -> torch.Tensor:
-    # Assumes (1, 1, 1, 1) padding
-    b, c, h, w = tensor.shape
-    oh, ow = h-2, w-2
-    window_offsets = torch.tensor([0, 1, 2, w, w+1, w+2, 2*w, 2*w+1, 2*w+2])
-    window_order = torch.tensor(window_order, dtype=torch.int)
-    permuted_offsets = window_offsets.index_select(0, window_order)
-    indices = U.outer_sum(torch.arange(oh) * w, torch.arange(ow)).flatten()
-    indices_2d = U.outer_sum(indices, permuted_offsets)
-    data_1d = tensor.reshape(b, c, -1).index_select(2, indices_2d.flatten())
-    data_3d = data_1d.reshape(b, c, oh, ow, 8)
-    return data_3d
+    padded = U.pad_tensor_reflect(U.pad_tensor_reflect(norm, 3, 1, 1), 2, 1, 1)
+    views = []
+    for i in range(9):
+        x, y = i % 3, i // 3
+        nx, ny = U.ztn(-(2-x)), U.ztn(-(2-y))
+        views += [padded[:, :, y:ny, x:nx]]
+    comparisons = []
+    for i in range(4):
+        lower = views[4] >= views[i]
+        upper = views[4] >= views[8-i]
+        comparisons += [torch.logical_and(lower, upper)]
+    angle_index = (((angle + (9 * pi / 8)) * (4 / pi)).to(torch.int) + 3) % 4
+    odd = (angle_index % 2).to(torch.bool)
+    l = torch.where(odd, comparisons[1], comparisons[0])
+    u = torch.where(odd, comparisons[3], comparisons[2])
+    mask = torch.where((angle_index // 2).to(torch.bool), u, l)
+    return mask
 
 
 #                       #

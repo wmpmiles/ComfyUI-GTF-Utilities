@@ -69,9 +69,9 @@ def uncrop_bbox(
     return uncropped
 
 
-def component_coloring(tensor: torch.Tensor) -> torch.Tensor:
+def component_coloring(tensor: torch.Tensor, diagonals: bool = False) -> torch.Tensor:
     b, c, h, w = tensor.shape
-    binary = tensor.clamp(0, 1).round().to(torch.int)
+    binary = tensor.to(torch.bool).to(torch.int)
     prepend = torch.zeros(b, c, h, 1, dtype=torch.int)
     diffed = torch.diff(binary, dim=3, prepend=prepend).clamp(0, 1)
     cumsum = torch.cumsum(diffed.flatten(-2), 2).reshape(b, c, h, w)
@@ -80,13 +80,10 @@ def component_coloring(tensor: torch.Tensor) -> torch.Tensor:
     max_unique = 0
     for bi in range(b):
         for ci in range(c):
-            adjacent = torch.logical_and(
-                binary[bi, ci, :-1, :],
-                binary[bi, ci, 1:, :]
-            )
-            equivalences_u = coloring_1d[bi, ci, :-1, :][adjacent]
-            equivalences_l = coloring_1d[bi, ci, 1:, :][adjacent]
-            equivalences = torch.stack((equivalences_u, equivalences_l), dim=1)
+            if diagonals:
+                equivalences = _equivalences_8_way(bi, ci, binary, coloring_1d)
+            else:
+                equivalences = _equivalences_4_way(bi, ci, binary, coloring_1d)
             unique = torch.unique_consecutive(cumsum[bi, ci]).tolist()
             if unique[0] == 0:
                 unique = unique[1:]
@@ -113,6 +110,28 @@ def component_coloring(tensor: torch.Tensor) -> torch.Tensor:
             c1d.reshape(-1)[:] = \
                 parent_relabel.index_select(0, c1d.reshape(-1))
     return (coloring_2d, max_unique)
+
+
+def _equivalences_4_way(bi: int, ci: int, binary: torch.Tensor, coloring_1d: torch.Tensor) -> torch.Tensor:
+        adjacent = torch.logical_and(binary[bi, ci, :-1, :], binary[bi, ci, 1:, :])
+        equivalences_u = coloring_1d[bi, ci, :-1, :][adjacent]
+        equivalences_d = coloring_1d[bi, ci, 1:, :][adjacent]
+        equivalences = torch.stack((equivalences_u, equivalences_d), dim=1)
+        return equivalences
+
+
+def _equivalences_8_way(bi: int, ci: int, binary: torch.Tensor, coloring_1d: torch.Tensor) -> torch.Tensor:
+    adjacent_left = torch.logical_and(binary[bi, ci, :-1, :-1], binary[bi, ci, 1:, 1:])
+    adjacent_right = torch.logical_and(binary[bi, ci, :-1, 1:], binary[bi, ci, 1:, :-1])
+    equ_l_u = coloring_1d[bi, ci, :-1, :-1][adjacent_left]
+    equ_r_u = coloring_1d[bi, ci, :-1, 1:][adjacent_right]
+    equ_l_d = coloring_1d[bi, ci, 1:, 1:][adjacent_left]
+    equ_r_d = coloring_1d[bi, ci, 1:, :-1][adjacent_right]
+    equ_m = _equivalences_4_way(bi, ci, binary, coloring_1d)
+    equ_l = torch.stack((equ_l_u, equ_l_d), dim=1)
+    equ_r = torch.stack((equ_r_u, equ_r_d), dim=1)
+    equ = torch.cat((equ_m, equ_l, equ_r), dim=0)
+    return equ
 
 
 def _disjoint_set_union(x, y, parents, size):

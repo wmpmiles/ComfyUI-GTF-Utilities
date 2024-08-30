@@ -148,8 +148,8 @@ class UncropFromBBOX(TransformBase):
     @staticmethod
     def INPUT_TYPES():
         return {"required": {
-            "gtf": ("GTF", ),
-            "bbox": ("BOUNDING_BOX", ),
+            "gtf": ("GTF", {}),
+            "bbox": ("BOUNDING_BOX", {}),
         }}
 
     INPUT_IS_LIST = True
@@ -169,10 +169,17 @@ class UncropFromBBOX(TransformBase):
 
 
 class ConnectedComponents(TransformBase):
-    OUTPUT_IS_LIST = (True, )
     @staticmethod
-    def f(gtf: torch.Tensor) -> tuple[list[torch.Tensor]]:
-        (coloring, max_unique) = T.component_coloring(gtf)
+    def INPUT_TYPES():
+        return {"required": {
+            "gtf": ("GTF", {}),
+            "diagonals": ("BOOLEAN", {"default": False}),
+        }}
+    OUTPUT_IS_LIST = (True, )
+
+    @staticmethod
+    def f(gtf: torch.Tensor, diagonals: bool) -> tuple[list[torch.Tensor]]:
+        (coloring, max_unique) = T.component_coloring(gtf, diagonals)
         if max_unique == 0:
             return ([coloring], )
         colorings = []
