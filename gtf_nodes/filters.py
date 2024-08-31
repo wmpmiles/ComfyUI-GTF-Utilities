@@ -1,7 +1,6 @@
 import torch
 from ..gtf_impl import utils as U
 from ..gtf_impl import filters as FT
-from ..gtf_impl import transform as TF
 
 
 class FilterBase:
@@ -36,44 +35,59 @@ class RangeNormalize(FilterBase):
         return (normalized, )
 
 
+class PatchRangeNormalize(FilterBase):
+    @staticmethod
+    def INPUT_TYPES():
+        return {"required":{
+            "gtf": ("GTF", {}),
+            "radius": ("INT", {"default": 1, "min": 0}),
+        }}
+
+    @staticmethod
+    def f(gtf: torch.Tensor, radius: int) -> tuple[torch.Tensor]:
+        normalized = FT.patch_range_normalize(gtf, radius)
+        return (normalized, )
+
+
 class BinaryThreshold(FilterBase):
     @staticmethod
     def INPUT_TYPES():
         return {"required": {
-            'gtf': ('GTF', ),
-            "threshold": ("FLOAT", {"default": 0.5, "step": 0.001}),
+            'gtf': ('GTF', {}),
+            "gtf_threshold": ("GTF", {}),
         }}
 
     @staticmethod
-    def f(gtf: torch.Tensor, threshold: float) -> tuple[torch.Tensor]:
-        thresholded = (gtf >= threshold).to(torch.float)
+    def f(gtf: torch.Tensor, gtf_threshold: torch.Tensor) -> tuple[torch.Tensor]:
+        thresholded = (gtf >= gtf_threshold).to(torch.float)
         return (thresholded, )
+
+
+class OtsusMethod(FilterBase):
+    @staticmethod
+    def INPUT_TYPES():
+        return {"required": {
+            'gtf': ('GTF', {}),
+            'bins': ("INT", {"min": 1, "default": 256}),
+        }}
+
+    @staticmethod
+    def f(gtf: torch.Tensor, bins: int) -> tuple[torch.Tensor]:
+        thresholds = FT.otsus_method(gtf, bins)
+        return (thresholds, )
 
 
 class HysteresisThreshold(FilterBase):
     @staticmethod
     def INPUT_TYPES():
         return {"required": {
-            'gtf': ('GTF', ),
-            "threshold": ("FLOAT", {"default": 0.5, "step": 0.001}),
+            'gtf_weak': ('GTF', {}),
+            'gtf_strong': ('GTF', {}),
         }}
 
     @staticmethod
-    def f(gtf: torch.Tensor, threshold: float) -> tuple[torch.Tensor]:
-        b, c, h, w = gtf.shape
-        coloring, max_unique = TF.component_coloring(gtf, True)
-        strong_components = coloring * (gtf >= threshold)
-        batches = []
-        for bi in range(b):
-            channels = []
-            for ci in range(c):
-                strong = torch.zeros(max_unique + 1)
-                strong[strong_components[bi, ci].flatten()] = 1
-                strong[0] = 0
-                result = strong.index_select(0, coloring[bi, ci].flatten()).reshape(h, w)
-                channels += [result]
-            batches += [torch.stack(channels)]
-        thresholded = torch.stack(batches)
+    def f(gtf_weak: torch.Tensor, gtf_strong: torch.Tensor) -> tuple[torch.Tensor]:
+        thresholded = FT.hysteresis_threshold(gtf_weak, gtf_strong)
         return (thresholded, )
 
 
@@ -155,6 +169,8 @@ NODE_CLASS_MAPPINGS = {
     "GTF | Filter - Binary Threshold": BinaryThreshold,
     "GTF | Filter - Quantize":         Quantize,
     "GTF | Filter - Morphological":    MorphologicalFilter,
+    "GTF | Helper - Otsu's Method":    OtsusMethod,
+    "GTF | Filter - Patch Range Normalize": PatchRangeNormalize,
 }
 
 __all__ = ["NODE_CLASS_MAPPINGS"]

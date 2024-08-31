@@ -4,6 +4,7 @@
 import torch
 import torch.nn.functional as F
 from ..gtf_impl import utils as U
+from ..gtf_impl import transform as TF
 from typing import Literal
 from math import pi
 
@@ -52,6 +53,59 @@ def gradient_suppression_mask(
     mask = torch.where((angle_index // 2).to(torch.bool), u, l)
     return mask
 
+
+def hysteresis_threshold(weak: torch.Tensor, strong: torch.Tensor) -> torch.Tensor:
+    b, c, h, w = weak.shape
+    coloring, max_unique = TF.component_coloring(weak, True)
+    strong_components = strong.to(torch.bool) * coloring
+    batches = []
+    for bi in range(b):
+        channels = []
+        for ci in range(c):
+            strong_select = torch.zeros(max_unique + 1)
+            strong_select[strong_components[bi, ci].flatten()] = 1
+            strong_select[0] = 0
+            result = strong_select.index_select(0, coloring[bi, ci].flatten()).reshape(h, w)
+            channels += [result]
+        batches += [torch.stack(channels)]
+    thresholded = torch.stack(batches)
+    return thresholded
+
+
+# https://en.wikipedia.org/wiki/Otsu%27s_method
+def otsus_method(gtf: torch.Tensor, bins: int) -> torch.Tensor:
+    b, c, h, w = gtf.shape
+    binned = (U.range_normalize(gtf, (2, 3)) * (bins - 1)).to(torch.int)
+    batches = []
+    for bi in range(b):
+        channels = []
+        for ci in range(c):
+            n = torch.bincount(binned[bi, ci].flatten(), minlength=bins)
+            n_cumsum = torch.cumsum(n, 0)
+            N = n_cumsum[-1]
+            omega = n_cumsum / N
+            mu = torch.cumsum(n_cumsum * torch.arange(bins), 0) / N
+            mu_T = mu[-1]
+            sigma_2_B = (mu_T * omega - mu)**2 / (omega * (1 - omega))
+            threshold = torch.argmax(sigma_2_B.nan_to_num()) / (bins - 1)
+            if threshold.dim() == 1:
+                return threshold[0]
+            channels += [threshold.reshape(1, 1)]
+        batches += [torch.stack(channels)]
+    thresholds = torch.stack(batches)
+    return thresholds
+
+
+def patch_range_normalize(gtf: torch.Tensor, radius: int) -> torch.Tensor: 
+    r = radius 
+    k = 2 * r + 1
+    padded0 = U.pad_tensor_reflect(U.pad_tensor_reflect(gtf, 3, r, r), 2, r, r)
+    minimum = -F.max_pool2d(-padded0, k, stride=1)
+    ln = gtf - minimum
+    padded1 = U.pad_tensor_reflect(U.pad_tensor_reflect(ln, 3, r, r), 2, r, r)
+    maximum = F.max_pool2d(padded1, k, stride=1)
+    normalized = ln / maximum
+    return normalized
 
 #                       #
 # MORPHOLOGICAL FILTERS #
