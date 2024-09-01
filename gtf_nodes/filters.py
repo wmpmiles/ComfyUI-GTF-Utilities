@@ -3,6 +3,8 @@ from ..gtf_impl import utils as U
 from ..gtf_impl import filters as FT
 
 
+# BASE CLASSES
+
 class FilterBase:
     @staticmethod
     def INPUT_TYPES():
@@ -13,6 +15,17 @@ class FilterBase:
     CATEGORY = 'gtf/filter'
     FUNCTION = "f"
 
+
+class FilterRadiusBase(FilterBase):
+    @staticmethod
+    def INPUT_TYPES():
+        return {"required": {
+            "gtf": ("GTF", {}),
+            "radius": ("INT", {"min": 0, "default": 1}),
+        }}
+
+
+# NODES
 
 class Invert(FilterBase):
     @staticmethod
@@ -35,14 +48,7 @@ class RangeNormalize(FilterBase):
         return (normalized, )
 
 
-class PatchRangeNormalize(FilterBase):
-    @staticmethod
-    def INPUT_TYPES():
-        return {"required":{
-            "gtf": ("GTF", {}),
-            "radius": ("INT", {"default": 1, "min": 0}),
-        }}
-
+class PatchRangeNormalize(FilterRadiusBase):
     @staticmethod
     def f(gtf: torch.Tensor, radius: int) -> tuple[torch.Tensor]:
         normalized = FT.patch_range_normalize(gtf, radius)
@@ -159,6 +165,27 @@ class MorphologicalFilter(FilterBase):
         return (filtered, )
 
 
+class MinFilter(FilterRadiusBase):
+    @staticmethod
+    def f(gtf: torch.Tensor, radius: int) -> tuple[torch.Tensor]:
+        filtered = FT.patch_min(gtf, radius)
+        return (filtered, )
+
+
+class MaxFilter(FilterRadiusBase):
+    @staticmethod
+    def f(gtf: torch.Tensor, radius: int) -> tuple[torch.Tensor]:
+        filtered = FT.patch_max(gtf, radius)
+        return (filtered, )
+
+
+class MedianFilter(FilterRadiusBase):
+    @staticmethod
+    def f(gtf: torch.Tensor, radius: int) -> tuple[torch.Tensor]:
+        filtered = FT.patch_median(gtf, radius)
+        return (filtered, )
+
+
 NODE_CLASS_MAPPINGS = {
     "GTF | Filter - Convolve":         Convolve,
     "GTF | Filter - Gradient NMS Mask": GradientNMSMask,
@@ -171,6 +198,9 @@ NODE_CLASS_MAPPINGS = {
     "GTF | Filter - Morphological":    MorphologicalFilter,
     "GTF | Helper - Otsu's Method":    OtsusMethod,
     "GTF | Filter - Patch Range Normalize": PatchRangeNormalize,
+    "GTF | Filter - Patch Min": MinFilter,
+    "GTF | Filter - Patch Max": MaxFilter,
+    "GTF | Filter - Patch Median": MedianFilter,
 }
 
 __all__ = ["NODE_CLASS_MAPPINGS"]

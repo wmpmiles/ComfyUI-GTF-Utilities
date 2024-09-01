@@ -96,14 +96,35 @@ def otsus_method(gtf: torch.Tensor, bins: int) -> torch.Tensor:
     return thresholds
 
 
+def patch_min(gtf: torch.Tensor, radius: int) -> torch.Tensor:
+    k = 2 * radius + 1
+    padded = U.pad_reflect_radius(gtf, (2, 3), radius)
+    minimum = -F.max_pool2d(-padded, k, stride=1)
+    return minimum
+
+
+def patch_max(gtf: torch.Tensor, radius: int) -> torch.Tensor:
+    k = 2 * radius + 1
+    padded = U.pad_reflect_radius(gtf, (2, 3), radius)
+    maximum = F.max_pool2d(padded, k, stride=1)
+    return maximum
+
+
+def patch_median(gtf: torch.Tensor, radius: int) -> torch.Tensor:
+    b, c, h, w = gtf.shape
+    k = 2 * radius + 1
+    padded = U.pad_reflect_radius(gtf, (2, 3), radius)
+    unfolded = U.unfold(padded, k, k)
+    median = unfolded.median(dim=-1, keepdim=False).values
+    return median
+
+
 def patch_range_normalize(gtf: torch.Tensor, radius: int) -> torch.Tensor: 
     r = radius 
     k = 2 * r + 1
-    padded0 = U.pad_tensor_reflect(U.pad_tensor_reflect(gtf, 3, r, r), 2, r, r)
-    minimum = -F.max_pool2d(-padded0, k, stride=1)
+    minimum = patch_min(gtf, radius)
     ln = gtf - minimum
-    padded1 = U.pad_tensor_reflect(U.pad_tensor_reflect(ln, 3, r, r), 2, r, r)
-    maximum = F.max_pool2d(padded1, k, stride=1)
+    maximum = patch_max(ln, radius)
     normalized = ln / maximum
     return normalized
 

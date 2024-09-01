@@ -49,6 +49,18 @@ def pad_tensor_reflect(
     return padded
 
 
+def pad_reflect_radius(tensor: torch.Tensor, dims: tuple[int], radius: int) -> torch.Tensor:
+    padded = tensor
+    for dim in dims:
+        padded = pad_tensor_reflect(padded, dim, radius, radius)
+    return padded
+
+
+def unfold(gtf: torch.Tensor, kh: int, kw: int) -> torch.Tensor:
+    unfolded = gtf.unfold(3 , kw, 1).unfold(2, kh, 1).flatten(-2)
+    return unfolded
+
+
 def outer_sum(lhs: torch.Tensor, rhs: torch.Tensor) -> torch.Tensor:
     ret = lhs.unsqueeze(1) + rhs.unsqueeze(0)
     return ret
