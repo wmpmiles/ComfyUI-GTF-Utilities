@@ -57,7 +57,7 @@ def pad_reflect_radius(tensor: torch.Tensor, dims: tuple[int], radius: int) -> t
 
 
 def unfold(gtf: torch.Tensor, kh: int, kw: int) -> torch.Tensor:
-    unfolded = gtf.unfold(3 , kw, 1).unfold(2, kh, 1).flatten(-2)
+    unfolded = gtf.unfold(3 , kw, 1).unfold(2, kh, 1)
     return unfolded
 
 

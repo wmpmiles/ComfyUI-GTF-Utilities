@@ -114,7 +114,7 @@ def patch_median(gtf: torch.Tensor, radius: int) -> torch.Tensor:
     b, c, h, w = gtf.shape
     k = 2 * radius + 1
     padded = U.pad_reflect_radius(gtf, (2, 3), radius)
-    unfolded = U.unfold(padded, k, k)
+    unfolded = U.unfold(padded, k, k).flatten(-2)
     median = unfolded.median(dim=-1, keepdim=False).values
     return median
 
@@ -150,7 +150,7 @@ def close(tensor: torch.Tensor, radius: int) -> torch.Tensor:
     return closed
 
 
-def tensor_open(tensor: torch.Tensor, radius: int) -> torch.Tensor:
+def open(tensor: torch.Tensor, radius: int) -> torch.Tensor:
     opened = dilate(erode(tensor, radius), radius)
     return opened
 
