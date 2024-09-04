@@ -53,8 +53,10 @@ class ToImage(InterfaceBase):
 
     @staticmethod
     def f(gtf: torch.Tensor) -> tuple[torch.Tensor]:
-        if gtf.shape[1] not in (3, 4):
-            raise ValueError("Can only convert a 3 or 4 channel GTF to an image.")
+        if gtf.shape[1] not in (1, 3, 4):
+            raise ValueError("Can only convert a 1, 3 or 4 channel GTF to an image.")
+        if gtf.shape[1] == 1:
+            gtf = gtf.expand(-1, 3, -1, -1)
         image = gtf.permute(0, 2, 3, 1)
         return (image, )
 
