@@ -11,6 +11,7 @@ of the image for each channel of each image in the batch.
 import torch
 from torch import Tensor
 from math import sqrt
+from typing import TypeAlias
 
 
 BoundingBox: TypeAlias = tuple[Tensor, Tensor]

@@ -1,4 +1,5 @@
 import torch
+from torch import Tensor
 from typing import Iterable
 
 
@@ -7,14 +8,14 @@ def round_up_to_mult_of(number: int, mult_of: int) -> int:
     return aligned
 
 
-def gtf_min(tensor: torch.Tensor, dims: Iterable[int]) -> torch.Tensor:
+def gtf_min(tensor: Tensor, dims: Iterable[int]) -> Tensor:
     curr = tensor
     for dim in dims:
         curr = torch.amin(curr, dim, True)
     return curr
 
 
-def gtf_max(tensor: torch.Tensor, dims: Iterable[int]) -> torch.Tensor:
+def gtf_max(tensor: Tensor, dims: Iterable[int]) -> Tensor:
     curr = tensor
     for dim in dims:
         curr = torch.amax(curr, dim, True)
@@ -31,17 +32,12 @@ def slice_dim(
     return slices
 
 
-def invert(tensor: torch.Tensor) -> torch.Tensor:
+def invert(tensor: Tensor) -> Tensor:
     inverted = (1.0 - tensor)
     return inverted
 
 
-def pad_tensor_reflect(
-    tensor: torch.Tensor,
-    dim: int,
-    pad_start: int,
-    pad_end: int
-) -> torch.Tensor:
+def pad_tensor_reflect(tensor: Tensor, dim: int, pad_start: int, pad_end: int) -> Tensor:
     length = tensor.shape[dim]
     start = tensor[slice_dim(dim, 1, pad_start+1)].flip(dim)
     end = tensor[slice_dim(dim, length-(pad_end+1), -1)].flip(dim)
@@ -49,26 +45,24 @@ def pad_tensor_reflect(
     return padded
 
 
-def pad_reflect_radius(tensor: torch.Tensor, dims: tuple[int], radius: int) -> torch.Tensor:
+def pad_reflect_radius(tensor: Tensor, dims: tuple[int], radius: int) -> Tensor:
     padded = tensor
     for dim in dims:
         padded = pad_tensor_reflect(padded, dim, radius, radius)
     return padded
 
 
-def unfold(gtf: torch.Tensor, kh: int, kw: int) -> torch.Tensor:
+def unfold(gtf: Tensor, kh: int, kw: int) -> Tensor:
     unfolded = gtf.unfold(3 , kw, 1).unfold(2, kh, 1)
     return unfolded
 
 
-def outer_sum(lhs: torch.Tensor, rhs: torch.Tensor) -> torch.Tensor:
+def outer_sum(lhs: Tensor, rhs: Tensor) -> Tensor:
     ret = lhs.unsqueeze(1) + rhs.unsqueeze(0)
     return ret
 
 
-def sum_normalize(
-    tensor: torch.Tensor, dims: Iterable[int]
-) -> torch.Tensor:
+def sum_normalize(tensor: Tensor, dims: Iterable[int]) -> Tensor:
     dims = sorted(dims)
     denominator = tensor
     for dim in reversed(dims):
@@ -79,9 +73,7 @@ def sum_normalize(
     return normalized
 
 
-def range_normalize(
-    tensor: torch.Tensor, dims: Iterable[int]
-) -> torch.Tensor:
+def range_normalize(tensor: Tensor, dims: Iterable[int]) -> Tensor:
     cur_min = gtf_min(tensor, dims)
     minned = tensor - cur_min
     cur_max = gtf_max(minned, dims)
@@ -113,6 +105,6 @@ def gtf_polar_to_cartesian(gtf_r: Tensor, gtf_theta: Tensor) -> tuple[Tensor, Te
     return (x, y)
     
 
-def gtf_rgb(r: int, g: int, b: int) -> torch.Tensor:
-    rgb = (torch.tensor((r, g, b)).to(torch.float) / 255).reshape(1, 3, 1, 1)
+def gtf_rgb(r: int, g: int, b: int) -> Tensor:
+    rgb = (Tensor((r, g, b)).to(torch.float) / 255).reshape(1, 3, 1, 1)
     return rgb

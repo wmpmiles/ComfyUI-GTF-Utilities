@@ -1,15 +1,11 @@
 import torch
+from torch import Tensor
 import torch.nn.functional as F
-from ..gtf_impl.utils import slice_dim, pad_tensor_reflect
+from utils import slice_dim, pad_tensor_reflect
+from bbox import BoundingBox
 
 
-def crop_uncrop(
-    tensor: torch.Tensor,
-    dim: int,
-    new_length: int,
-    anchor: str,
-    mode: str,
-) -> torch.Tensor:
+def crop_uncrop(tensor: Tensor, dim: int, new_length: int, anchor: str, mode: str) -> Tensor:
     length = int(tensor.shape[dim])
     delta = new_length - length
     match anchor:
@@ -22,11 +18,11 @@ def crop_uncrop(
 
 
 def _pad_crop_dim(
-    tensor: torch.Tensor,
+    tensor: Tensor,
     dim: int,
     deltas: tuple[int, int],
     mode: str,
-) -> torch.Tensor:
+) -> Tensor:
     dl, dr = deltas
     sl, sr = (min(0, dl), min(0, dr))
     pl, pr = (max(0, dl), max(0, dr))
@@ -36,11 +32,11 @@ def _pad_crop_dim(
 
 
 def _pad_dim(
-    tensor: torch.Tensor,
+    tensor: Tensor,
     dim: int,
     pad: tuple[int, int],
     mode: str,
-) -> torch.Tensor:
+) -> Tensor:
     match mode:
         case "zero":
             dims = tensor.dim()
@@ -54,10 +50,10 @@ def _pad_dim(
 
 
 def uncrop_bbox(
-    tensor: torch.Tensor,
-    single_lrud: torch.Tensor,
-    wh: torch.Tensor
-) -> torch.Tensor:
+    tensor: Tensor,
+    single_lrud: Tensor,
+    wh: Tensor
+) -> Tensor:
     w, h = wh
     b, c, th, tw = (int(x) for x in tensor.shape)
     l, r, u, d = (int(x) for x in single_lrud)
@@ -69,7 +65,7 @@ def uncrop_bbox(
     return uncropped
 
 
-def component_coloring(tensor: torch.Tensor, diagonals: bool = False) -> torch.Tensor:
+def component_coloring(tensor: Tensor, diagonals: bool = False) -> Tensor:
     b, c, h, w = tensor.shape
     binary = tensor.to(torch.bool).to(torch.int)
     prepend = torch.zeros(b, c, h, 1, dtype=torch.int)
@@ -99,7 +95,7 @@ def component_coloring(tensor: torch.Tensor, diagonals: bool = False) -> torch.T
             for x in range(umax + 1):
                 parent[x] = _disjoint_set_find(x, parent)
             # relabel
-            parent = torch.tensor(parent)
+            parent = Tensor(parent)
             parent_unique = torch.unique(parent)
             max_unique = max(max_unique, int(parent_unique.shape[0]) - 1)
             index_map = torch.zeros((umax + 1, ), dtype=torch.long)
@@ -112,7 +108,7 @@ def component_coloring(tensor: torch.Tensor, diagonals: bool = False) -> torch.T
     return (coloring_2d, max_unique)
 
 
-def _equivalences_4_way(bi: int, ci: int, binary: torch.Tensor, coloring_1d: torch.Tensor) -> torch.Tensor:
+def _equivalences_4_way(bi: int, ci: int, binary: Tensor, coloring_1d: Tensor) -> Tensor:
         adjacent = torch.logical_and(binary[bi, ci, :-1, :], binary[bi, ci, 1:, :])
         equivalences_u = coloring_1d[bi, ci, :-1, :][adjacent]
         equivalences_d = coloring_1d[bi, ci, 1:, :][adjacent]
@@ -120,7 +116,7 @@ def _equivalences_4_way(bi: int, ci: int, binary: torch.Tensor, coloring_1d: tor
         return equivalences
 
 
-def _equivalences_8_way(bi: int, ci: int, binary: torch.Tensor, coloring_1d: torch.Tensor) -> torch.Tensor:
+def _equivalences_8_way(bi: int, ci: int, binary: Tensor, coloring_1d: Tensor) -> Tensor:
     adjacent_left = torch.logical_and(binary[bi, ci, :-1, :-1], binary[bi, ci, 1:, 1:])
     adjacent_right = torch.logical_and(binary[bi, ci, :-1, 1:], binary[bi, ci, 1:, :-1])
     equ_l_u = coloring_1d[bi, ci, :-1, :-1][adjacent_left]
@@ -151,7 +147,7 @@ def _disjoint_set_find(x, parents):
     return x
 
 
-def gtf_crop_to_bbox(gtf: Tensor, bbox: BoundingBox) -> list[torch.Tensor]:
+def gtf_crop_to_bbox(gtf: Tensor, bbox: BoundingBox) -> list[Tensor]:
     wh, lrud = bbox
     w, h = wh
     if gtf.shape[2] != h or gtf.shape[3] != w:

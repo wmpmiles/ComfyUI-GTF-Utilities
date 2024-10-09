@@ -9,10 +9,11 @@ Supports:
 - Mitchell-Netravali resampling (1D, 2D, seperable)
 """
 
-from typing import Callable
 import torch
+from torch import Tensor
 import math
-from ..gtf_impl import utils as U
+from typing import Callable
+import utils as U
 
 
 #                              #
@@ -20,19 +21,19 @@ from ..gtf_impl import utils as U
 #                              #
 
 def _nearest_neighbor_indices(
-    I_t: torch.Tensor,
+    I_t: Tensor,
     l: int,
     L: int
-) -> torch.Tensor:
+) -> Tensor:
     i_snn = ((2 * I_t + 1) * l) // (2 * L)
     return i_snn
 
 
 def _nearest_neighbor_1d(
-    d_s: torch.Tensor,
+    d_s: Tensor,
     L: int,
     dim: int = 0
-) -> torch.Tensor:
+) -> Tensor:
     L = L
     l = int(d_s.shape[dim])
     I_t = torch.arange(L)
@@ -42,10 +43,10 @@ def _nearest_neighbor_1d(
 
 
 def nearest_neighbor_2d(
-    d_s: torch.Tensor,
+    d_s: Tensor,
     L: tuple[int, int],
     dim: tuple[int, int] = (0, 1)
-) -> torch.Tensor:
+) -> Tensor:
     D_0 = _nearest_neighbor_1d(d_s, L[0], dim[0])
     D_1 = _nearest_neighbor_1d(D_0, L[1], dim[1])
     return D_1
@@ -72,13 +73,13 @@ def _window_lengths(
 
 
 def _padding_1d(
-    i_snn: torch.Tensor,
-    I_t: torch.Tensor,
+    i_snn: Tensor,
+    I_t: Tensor,
     l: int,
     L: int,
     W: int,
     w: int,
-) -> torch.Tensor:
+) -> Tensor:
     if w == 1 and W == 1:
         p = i_snn * 0
     elif L <= l:
@@ -90,13 +91,13 @@ def _padding_1d(
 
 
 def _x_values_1d(
-    i_snn: torch.Tensor,
-    i_w: torch.Tensor,
-    I_t: torch.Tensor,
+    i_snn: Tensor,
+    i_w: Tensor,
+    I_t: Tensor,
     l: int,
     L: int,
-    p: torch.Tensor
-) -> torch.Tensor:
+    p: Tensor
+) -> Tensor:
     X_w_n = U.outer_sum(
         (2 * (i_snn - p) + 1) * L - (2 * I_t + 1) * l, (2 * L) * i_w
     )
@@ -109,15 +110,15 @@ def _x_values_1d(
 
 
 def _data_values_1d(
-    d_p: torch.Tensor,
-    i_snn: torch.Tensor,
-    i_w: torch.Tensor,
-    p: torch.Tensor,
+    d_p: Tensor,
+    i_snn: Tensor,
+    i_w: Tensor,
+    p: Tensor,
     p0: int,
     L: int,
     w: int,
     dim: int = 0
-) -> torch.Tensor:
+) -> Tensor:
     o = i_snn - p + p0
     i_2d = U.outer_sum(o, i_w)
     i_1d = i_2d.flatten()
@@ -129,12 +130,12 @@ def _data_values_1d(
 
 
 def filter_1d(
-    d_s: torch.Tensor,
+    d_s: Tensor,
     L: int,
     radius: int,
-    filter: Callable[[torch.Tensor], torch.Tensor],
+    filter: Callable[[Tensor], Tensor],
     dim: int = 0,
-) -> torch.Tensor:
+) -> Tensor:
     l = int(d_s.shape[dim])
     (w, W) = _window_lengths(l, L, radius)
     I_t = torch.arange(L)
@@ -156,22 +157,22 @@ def filter_1d(
 
 
 def filter_2d_seperable(
-    d_s: torch.Tensor,
+    d_s: Tensor,
     L: tuple[int, int],
     radius: int,
-    filter: Callable[[torch.Tensor], torch.Tensor],
+    filter: Callable[[Tensor], Tensor],
     dim: tuple[int, int] = (0, 1),
-) -> torch.Tensor:
+) -> Tensor:
     D_0 = filter_1d(d_s, L[0], radius, filter, dim[0])
     D_1 = filter_1d(D_0, L[1], radius, filter, dim[1])
     return D_1
 
 
 def _x_values_2d(
-    X_w: tuple[torch.Tensor, torch.Tensor],
+    X_w: tuple[Tensor, Tensor],
     L: tuple[int, int],
     w: tuple[int, int],
-) -> torch.Tensor:
+) -> Tensor:
     X_w_sqr = (X_w[0] * X_w[0], X_w[1] * X_w[1])
     X_w2_sqr = X_w_sqr[0].reshape(L[0], 1, w[0], 1) + \
         X_w_sqr[1].reshape(1, L[1], 1, w[1])
@@ -180,16 +181,16 @@ def _x_values_2d(
 
 
 def _data_values_2d(
-    d_p: torch.Tensor,
-    i_snn: tuple[torch.Tensor, torch.Tensor],
-    p: tuple[torch.Tensor, torch.Tensor],
-    i_w: tuple[torch.Tensor, torch.Tensor],
+    d_p: Tensor,
+    i_snn: tuple[Tensor, Tensor],
+    p: tuple[Tensor, Tensor],
+    i_w: tuple[Tensor, Tensor],
     p0: tuple[int, int],
     w: tuple[int, int],
     L: tuple[int, int],
     l_p: tuple[int, int],
     dim: tuple[int, int],
-) -> torch.Tensor:
+) -> Tensor:
     o = (i_snn[0] - p[0] + p0[0], i_snn[1] - p[1] + p0[1])
     i_2d = (U.outer_sum(o[0], i_w[0]), U.outer_sum(o[1], i_w[1]))
     i_4d = (i_2d[0] * l_p[1]).reshape(L[0], 1, w[0], 1) + \
@@ -206,12 +207,12 @@ def _data_values_2d(
 
 
 def filter_2d(
-    d_s: torch.Tensor,
+    d_s: Tensor,
     L: tuple[int, int],
     radius: int,
-    filter: Callable[[torch.Tensor], torch.Tensor],
+    filter: Callable[[Tensor], Tensor],
     dim: tuple[int, int] = (0, 1),
-) -> torch.Tensor:
+) -> Tensor:
     l = (int(d_s.shape[dim[0]]), int(d_s.shape[dim[1]]))
     (w, W) = tuple(zip(
         _window_lengths(l[0], L[0], radius),
@@ -247,99 +248,3 @@ def filter_2d(
     d_f = d_4d * f_n.reshape(*shape)
     d_r = d_f.sum(-1).sum(-1)
     return d_r
-
-
-#         #
-# FILTERS #
-#         #
-
-def triangle_filter(
-    R: int,
-) -> Callable[[torch.Tensor], torch.Tensor]:
-    def filter(X):
-        return ((R - torch.abs(X)) / R).clamp(0, 1)
-    return filter
-
-
-def lanczos_filter(
-    R: int,
-) -> Callable[[torch.Tensor], torch.Tensor]:
-    def filter(X):
-        X_pi = math.pi * X
-        p1_mask = X == 0.0
-        p1 = torch.ones(*X.shape)
-        p2 = R * torch.sin(X_pi) * torch.sin(X_pi / R) / (X_pi * X_pi)
-        p2_mask = torch.logical_and(-R <= X, X < R)
-        # Use where rather than a multiply because the division can lead to
-        # NaN where X == 0.0
-        lanczos = torch.where(p1_mask, p1, p2 * p2_mask)
-        return lanczos
-    return filter
-
-
-def mitchell_netravali_radius() -> int:
-    return 2
-
-
-def mitchell_netravali_filter(
-    b: float,
-    c: float
-) -> Callable[[torch.Tensor], torch.Tensor]:
-    def filter(X):
-        X_abs = torch.abs(X)
-        X_abs2 = X_abs * X_abs
-        X_abs3 = X_abs2 * X_abs
-        p0 = (12 + -9*b + -6*c)*X_abs3 + (-18 + 12*b + 6*c)*X_abs2 + (6 + -2*b)
-        p1 = (-b + -6*c)*X_abs3 + (6*b + 30*c)*X_abs2 + (-12*b + -48*c)*X_abs \
-            + (8*b + 24*c)
-        p0_mask = X_abs < 1
-        p1_mask = torch.logical_and(torch.logical_not(p0_mask), X_abs < 2)
-        p = p0 * p0_mask + p1 * p1_mask
-        mn = p / 6
-        return mn
-    return filter
-
-
-#                 #
-# Area Resampling #
-#                 #
-
-def _area_radius() -> int:
-    return 1
-
-
-def _area_filter(
-    l: int,
-    L: int
-) -> Callable[[torch.Tensor], torch.Tensor]:
-    def filter_down(x_values: torch.Tensor):
-        P = (((L + l) - (2 * l) * torch.abs(x_values)) / (2 * L)).clamp(0, 1)
-        return P
-
-    def filter_up(x_values: torch.Tensor):
-        P = (((L + l) - (2 * L) * torch.abs(x_values)) / (2 * l)).clamp(0, 1)
-        return P
-
-    if L <= l:
-        return filter_down
-    else:
-        return filter_up
-
-
-def area_1d(d_s: torch.Tensor, L: int, dim: int = 0) -> torch.Tensor:
-    l = int(d_s.shape[dim])
-    f = _area_filter(l, L)
-    D = _filter_1d(d_s, L, _area_radius(), f, dim)
-    return D
-
-
-def area_2d(
-    d_s: torch.Tensor,
-    L: tuple[int, int],
-    dim: tuple[int, int] = (0, 1)
-) -> torch.Tensor:
-    l = (int(d_s.shape[dim[0]]), int(d_s.shape[dim[1]]))
-    f = (_area_filter(l[0], L[0]), _area_filter(l[1], L[1]))
-    D_0 = _filter_1d(d_s, L[0], _area_radius(), f[0], dim[0])
-    D_1 = _filter_1d(D_0, L[1], _area_radius(), f[1], dim[1])
-    return D_1

@@ -1,44 +1,45 @@
 import torch
+from torch import Tensor
 
 
 # All based on https://64.github.io/tonemapping/
 
 
-def reinhard(tensor: torch.Tensor) -> torch.Tensor:
+def reinhard(tensor: Tensor) -> Tensor:
     tonemapped = tensor / (1 + tensor)
     return tonemapped
 
 
 def reinhard_luminance(
-    tensor: torch.Tensor,
-    luminance: torch.Tensor
-) -> torch.Tensor:
+    tensor: Tensor,
+    luminance: Tensor
+) -> Tensor:
     tonemapped = tensor / (1 + luminance)
     return tonemapped
 
 
 def reinhard_extended(
-    tensor: torch.Tensor,
-    whitepoint: torch.Tensor
-) -> torch.Tensor:
+    tensor: Tensor,
+    whitepoint: Tensor
+) -> Tensor:
     tonemapped = (tensor * (1 + (tensor / (whitepoint ** 2)))) / (1 + tensor)
     return tonemapped
 
 
 def reinhard_extended_luminance(
-    tensor: torch.Tensor,
-    luminance: torch.Tensor,
-    whitepoint: torch.Tensor
-) -> torch.Tensor:
+    tensor: Tensor,
+    luminance: Tensor,
+    whitepoint: Tensor
+) -> Tensor:
     tonemapped = \
         (tensor * (1 + (luminance / (whitepoint ** 2)))) / (1 + luminance)
     return tonemapped
 
 
 def reinhard_jodie(
-    tensor: torch.Tensor,
-    luminance: torch.Tensor
-) -> torch.Tensor:
+    tensor: Tensor,
+    luminance: Tensor
+) -> Tensor:
     t_reinhard = reinhard(tensor)
     t_reinhard_luminance = reinhard_luminance(tensor, luminance)
     lerped = torch.lerp(t_reinhard_luminance, t_reinhard, t_reinhard)
@@ -46,10 +47,10 @@ def reinhard_jodie(
 
 
 def reinhard_jodie_extended(
-    tensor: torch.Tensor,
-    luminance: torch.Tensor,
-    whitepoint: torch.Tensor
-) -> torch.Tensor:
+    tensor: Tensor,
+    luminance: Tensor,
+    whitepoint: Tensor
+) -> Tensor:
     t_reinhard = reinhard_extended(tensor, whitepoint)
     t_reinhard_luminance = \
         reinhard_extended_luminance(tensor, luminance, whitepoint)
@@ -57,8 +58,8 @@ def reinhard_jodie_extended(
     return lerped
 
 
-def uncharted_2(tensor: torch.Tensor) -> torch.Tensor:
-    def tonemap_partial(t: torch.Tensor | float) -> torch.Tensor | float:
+def uncharted_2(tensor: Tensor) -> Tensor:
+    def tonemap_partial(t: Tensor | float) -> Tensor | float:
         A, B, C, D, E, F = 0.15, 0.5, 0.1, 0.2, 0.02, 0.3
         partial = ((t*(A*t+C*B)+D*E)/(t*(A*t+B)+D*F))-E/F
         return partial
@@ -70,13 +71,13 @@ def uncharted_2(tensor: torch.Tensor) -> torch.Tensor:
     return tonemapped
 
 
-def aces(tensor: torch.Tensor) -> torch.Tensor:
-    ACES_INPUT = torch.tensor((
+def aces(tensor: Tensor) -> Tensor:
+    ACES_INPUT = Tensor((
         (0.59719, 0.35458, 0.04823),
         (0.07600, 0.90834, 0.01566),
         (0.02840, 0.13383, 0.83777),
     )).reshape(1, 3, 3, 1, 1)
-    ACES_OUTPUT = torch.tensor((
+    ACES_OUTPUT = Tensor((
         (+1.60475, -0.53108, -0.07367),
         (-0.10208, +1.10813, -0.00605),
         (-0.00327, -0.07276, +1.07602),

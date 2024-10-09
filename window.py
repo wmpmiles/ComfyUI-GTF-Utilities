@@ -1,24 +1,25 @@
 import torch
+from torch import Tensor
 
 
 # FUNCTIONS
 
-def boxcar(x: torch.Tensor, radius: int) -> torch.Tensor:
+def boxcar(x: Tensor, radius: int) -> Tensor:
     windowed = (torch.abs(x) <= radius).to(torch.float)
     return windowed
 
 
-def triangle(x: torch.Tensor, radius: int) -> torch.Tensor:
+def triangle(x: Tensor, radius: int) -> Tensor:
     windowed = ((radius - torch.abs(x)) / radius).clamp(0, 1)
     return windowed
 
 
-def lanczos(x: torch.Tensor, radius: int) -> torch.Tensor:
+def lanczos(x: Tensor, radius: int) -> Tensor:
     windowed = torch.sinc(x / radius) * (torch.abs(x) <= radius)
     return windowed
 
 
-def mitchell_netravali(x: torch.Tensor, b: float, c: float) -> torch.Tensor:
+def mitchell_netravali(x: Tensor, b: float, c: float) -> Tensor:
     x_abs = torch.abs(x)
     x_abs2 = x_abs * x_abs
     x_abs3 = x_abs2 * x_abs
@@ -31,7 +32,7 @@ def mitchell_netravali(x: torch.Tensor, b: float, c: float) -> torch.Tensor:
     return mn
 
 
-def area(x: torch.Tensor, l: int, L: int) -> torch.Tensor:
+def area(x: Tensor, l: int, L: int) -> Tensor:
     l, L = (l, L) if L <= l else (L, l)
     windowed = (((L + l) - (2 * l) * torch.abs(x)) / (2 * L)).clamp(0, 1)
     return windowed

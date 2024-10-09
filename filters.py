@@ -2,14 +2,16 @@
 
 
 import torch
+from torch import Tensor
 import torch.nn.functional as F
-from ..gtf_impl import utils as U
-from ..gtf_impl import transform as TF
+import utils as U
+import transform as TF
 from typing import Literal
 from math import pi
+from enum import Enum
 
 
-def convolve_2d(tensor: torch.Tensor, kernel: torch.Tensor) -> torch.Tensor:
+def convolve_2d(tensor: Tensor, kernel: Tensor) -> Tensor:
     b, c, _, _ = tensor.shape
     kb, kc, kh, kw = kernel.shape
     if kh % 2 == 0 or kw % 2 == 0:
@@ -31,10 +33,7 @@ def convolve_2d(tensor: torch.Tensor, kernel: torch.Tensor) -> torch.Tensor:
     return concatenated
 
 
-def gradient_suppression_mask(
-    norm: torch.Tensor, 
-    angle: torch.Tensor
-) -> torch.Tensor:
+def gradient_suppression_mask(norm: Tensor, angle: Tensor) -> Tensor:
     padded = U.pad_tensor_reflect(U.pad_tensor_reflect(norm, 3, 1, 1), 2, 1, 1)
     views = []
     for i in range(9):
@@ -54,7 +53,7 @@ def gradient_suppression_mask(
     return mask
 
 
-def hysteresis_threshold(weak: torch.Tensor, strong: torch.Tensor) -> torch.Tensor:
+def hysteresis_threshold(weak: Tensor, strong: Tensor) -> Tensor:
     b, c, h, w = weak.shape
     coloring, max_unique = TF.component_coloring(weak, True)
     strong_components = strong.to(torch.bool) * coloring
@@ -73,7 +72,7 @@ def hysteresis_threshold(weak: torch.Tensor, strong: torch.Tensor) -> torch.Tens
 
 
 # https://en.wikipedia.org/wiki/Otsu%27s_method
-def otsus_method(gtf: torch.Tensor, bins: int) -> torch.Tensor:
+def otsus_method(gtf: Tensor, bins: int) -> Tensor:
     b, c, h, w = gtf.shape
     binned = (U.range_normalize(gtf, (2, 3)) * (bins - 1)).to(torch.int)
     batches = []
@@ -96,21 +95,21 @@ def otsus_method(gtf: torch.Tensor, bins: int) -> torch.Tensor:
     return thresholds
 
 
-def patch_min(gtf: torch.Tensor, radius: int) -> torch.Tensor:
+def patch_min(gtf: Tensor, radius: int) -> Tensor:
     k = 2 * radius + 1
     padded = U.pad_reflect_radius(gtf, (2, 3), radius)
     minimum = -F.max_pool2d(-padded, k, stride=1)
     return minimum
 
 
-def patch_max(gtf: torch.Tensor, radius: int) -> torch.Tensor:
+def patch_max(gtf: Tensor, radius: int) -> Tensor:
     k = 2 * radius + 1
     padded = U.pad_reflect_radius(gtf, (2, 3), radius)
     maximum = F.max_pool2d(padded, k, stride=1)
     return maximum
 
 
-def patch_median(gtf: torch.Tensor, radius: int) -> torch.Tensor:
+def patch_median(gtf: Tensor, radius: int) -> Tensor:
     b, c, h, w = gtf.shape
     k = 2 * radius + 1
     padded = U.pad_reflect_radius(gtf, (2, 3), radius)
@@ -119,7 +118,7 @@ def patch_median(gtf: torch.Tensor, radius: int) -> torch.Tensor:
     return median
 
 
-def patch_range_normalize(gtf: torch.Tensor, radius: int) -> torch.Tensor: 
+def patch_range_normalize(gtf: Tensor, radius: int) -> Tensor: 
     r = radius 
     k = 2 * r + 1
     minimum = patch_min(gtf, radius)
@@ -133,24 +132,24 @@ def patch_range_normalize(gtf: torch.Tensor, radius: int) -> torch.Tensor:
 #                       #
 
 # precondition: radius > 0
-def dilate(tensor: torch.Tensor, radius: int) -> torch.Tensor:
+def dilate(tensor: Tensor, radius: int) -> Tensor:
     kernel_size = 2 * radius - 1
     padding = radius - 1
     dilated = F.max_pool2d(tensor, kernel_size, stride=1, padding=padding)
     return dilated
 
 
-def erode(tensor: torch.Tensor, radius: int) -> torch.Tensor:
+def erode(tensor: Tensor, radius: int) -> Tensor:
     eroded = U.invert(dilate(U.invert(tensor), radius))
     return eroded
 
 
-def close(tensor: torch.Tensor, radius: int) -> torch.Tensor:
+def close(tensor: Tensor, radius: int) -> Tensor:
     closed = erode(dilate(tensor, radius), radius)
     return closed
 
 
-def open(tensor: torch.Tensor, radius: int) -> torch.Tensor:
+def open(tensor: Tensor, radius: int) -> Tensor:
     opened = dilate(erode(tensor, radius), radius)
     return opened
 
@@ -159,20 +158,13 @@ def open(tensor: torch.Tensor, radius: int) -> torch.Tensor:
 # OTHER FILTERS #
 #               #
 
+class QuantizeMode(Enum):
+    ROUND = torch.round
+    FLOOR = tourch.floor
+    CEILING = torch.ceil
 
 
-def quantize(
-    tensor: torch.Tensor,
-    steps: int,
-    mode: Literal["round", "floor", "ceiling"],
-) -> torch.Tensor:
-    F_MAP = {
-        "round": torch.round,
-        "floor": torch.floor,
-        "ceiling": torch.ceil,
-    }
-    if mode not in F_MAP:
-        raise ValueError("`mode` must be one of ('round', 'floor', 'ceiling')")
+def quantize(tensor: Tensor, steps: int, mode: QuantizeMode) -> Tensor:
     max_val = steps - 1
-    quantized = F_MAP[mode](tensor * max_val) / max_val
+    quantized = mode(tensor * max_val) / max_val
     return quantized
