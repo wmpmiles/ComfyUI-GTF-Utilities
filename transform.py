@@ -149,3 +149,46 @@ def _disjoint_set_find(x, parents):
         parents[x] = parents[parents[x]]
         x = parents[x]
     return x
+
+
+def gtf_crop_to_bbox(gtf: Tensor, bbox: BoundingBox) -> list[torch.Tensor]:
+    wh, lrud = bbox
+    w, h = wh
+    if gtf.shape[2] != h or gtf.shape[3] != w:
+        raise ValueError("GTF dimensions do not match those expected by the bounding box.")
+    if gtf.shape[0] != lrud.shape[1] or gtf.shape[1] != lrud.shape[2]:
+        raise ValueError("BBOX and GTF channel count and batch size must match")
+    cropped = []
+    for bi in range(gtf.shape[0]):
+        for ci in range(gtf.shape[1]):
+            l, r, u, d = lrud[:, bi, ci]
+            cropped += [gtf[bi:bi+1, ci:ci+1, u:d, l:r]]
+    return cropped
+
+
+def gtf_uncrop_from_bbox(gtfs: list[Tensor], bbox: BoundingBox) -> Tensor:
+    wh, lrud = bbox
+    _, b, c = lrud.shape
+    if len(gtfs) != b * c:
+        raise ValueError("GTFs and BBOX must have same channel count and batch size.")
+    batch = []
+    for bi in range(lrud.shape[1]):
+        channels = []
+        for ci in range(lrud.shape[2]):
+            gtf = gtfs[bi * c + ci]
+            single_lrud = lrud[:, bi, ci]
+            uncropped = uncrop_bbox(gtf, single_lrud, wh)
+            channels += [uncropped] 
+        batch += [torch.cat(channels, dim=1)]
+    gtf = torch.cat(batch, dim=0)
+    return gtf
+
+
+def connect_components(gtf: Tensor, diagonals: bool) -> list[Tensor]:
+    (coloring, max_unique) = component_coloring(gtf, diagonals)
+    if max_unique == 0:
+        return [coloring]
+    colorings = []
+    for i in range(1, max_unique + 1):
+        colorings += [(coloring == i).to(gtf.dtype)]
+    return colorings

@@ -159,11 +159,6 @@ def open(tensor: torch.Tensor, radius: int) -> torch.Tensor:
 # OTHER FILTERS #
 #               #
 
-F_MAP = {
-    "round": torch.round,
-    "floor": torch.floor,
-    "ceiling": torch.ceil,
-}
 
 
 def quantize(
@@ -171,6 +166,13 @@ def quantize(
     steps: int,
     mode: Literal["round", "floor", "ceiling"],
 ) -> torch.Tensor:
+    F_MAP = {
+        "round": torch.round,
+        "floor": torch.floor,
+        "ceiling": torch.ceil,
+    }
+    if mode not in F_MAP:
+        raise ValueError("`mode` must be one of ('round', 'floor', 'ceiling')")
     max_val = steps - 1
     quantized = F_MAP[mode](tensor * max_val) / max_val
     return quantized

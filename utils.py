@@ -92,3 +92,27 @@ def range_normalize(
 
 def ztn(value: int) -> int | None:
     return None if value == 0 else value
+
+
+def dimensions_scale_to_megapixels(width: int, height: int, megapixels: float) -> tuple[int, int]:
+    curr_mp = (width * height) / 1_000_000
+    scale = sqrt(megapixels / curr_mp)
+    nw, nh = int(width * scale), int(height * scale)
+    return (nw, nh)
+
+
+def gtf_cartesian_to_polar(gtf_x: Tensor, gtf_y: Tensor) -> tuple[Tensor, Tensor]:
+    r = torch.hypot(gtf_x, gtf_y)
+    theta = torch.atan2(gtf_y, gtf_x).nan_to_num()
+    return (r, theta)
+
+
+def gtf_polar_to_cartesian(gtf_r: Tensor, gtf_theta: Tensor) -> tuple[Tensor, Tensor]:
+    x = gtf_r * torch.cos(gtf_theta)
+    y = gtf_r * torch.sin(gtf_theta)
+    return (x, y)
+    
+
+def gtf_rgb(r: int, g: int, b: int) -> torch.Tensor:
+    rgb = (torch.tensor((r, g, b)).to(torch.float) / 255).reshape(1, 3, 1, 1)
+    return rgb

@@ -1,7 +1,7 @@
 [project]
-name = "comfyui-gtf-utilities"
-description = "Generalised 'image' processing nodes for images, masks, latents, and combinations thereof."
-version = "0.0.2"
+name = "gtfu"
+description = "Library for common image processing operations on PyTorch tensor batches."
+version = "0.0.3"
 license = {file = "LICENSE"}
 
 [project.urls]
@@ -10,5 +10,5 @@ Repository = "https://github.com/wmpmiles/ComfyUI-GTF-Utilities.git"
 
 [tool.comfy]
 PublisherId = "wmpmiles"
-DisplayName = "ComfyUI-GTF-Utilities"
+DisplayName = "GTF Utilities"
 Icon = ""
