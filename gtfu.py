@@ -3,9 +3,10 @@ import inspect
 
 import torch.nn.functional as F
 
-from typing import TypeAlias, Iterable
+from typing import TypeAlias, Iterable, Callable, _CallableGenericAlias
 from types import GenericAlias, UnionType
 from dataclasses import dataclass
+from enum import Enum
 from math import sqrt, log, pi
 from torch import Tensor
 from scipy.special import erfinv
@@ -51,18 +52,18 @@ class BBox:
     def right_offset(self):
         self.left + self.width
 
-    @proprty
+    @property
     def valid(self) -> bool:
         return \
-            self.left   >= 0
-            self.width  >= 0
-            self.right  >= 0
-            self.up     >= 0
-            self.height >= 0
+            self.left   >= 0 and \
+            self.width  >= 0 and \
+            self.right  >= 0 and \
+            self.up     >= 0 and \
+            self.height >= 0 and \
             self.down   >= 0
 
 
-def bbox_from_2d_binary(tensor: Tensor) -> BoundingBox:
+def bbox_from_2d_binary(tensor: Tensor) -> BBox:
     _check([
         "tensor.dim() == 2",
         "tensor.dtype == torch.bool",
@@ -83,7 +84,7 @@ def _h_min_max(tensor: Tensor) -> tuple[int, int, int]:
     return (u, h, d)
 
 
-def bbox_expand_area(bbox: BoundingBox, area_multiplier: float) -> BoundingBox:
+def bbox_expand_area(bbox: BBox, area_multiplier: float) -> BBox:
     _check([
         "bbox.valid",
         "area_multiplier >= 0",
@@ -92,11 +93,11 @@ def bbox_expand_area(bbox: BoundingBox, area_multiplier: float) -> BoundingBox:
     _, _, _, am = _axis_expand(bbox.left, bbox.width, bbox.right, side_multiplier)
     u, h, d, am = _axis_expand(bbox.up, bbox.height, bbox.down, area_multiplier / am)
     l, w, r, __ = _axis_expand(bbox.left, bbox.width, bbox.right, area_multiplier / am)
-    expanded = BoundingBox(l, w, r, u, h, d)
+    expanded = BBox(l, w, r, u, h, d)
     return new_lrud
 
 
-def bbox_outer_square(bbox: BoundingBox) -> BoundingBox:
+def bbox_outer_square(bbox: BBox) -> BBox:
     _check([
         "bbox.valid",
     ])
@@ -105,7 +106,7 @@ def bbox_outer_square(bbox: BoundingBox) -> BoundingBox:
     h_mul = max(w / h, 1)
     nl, nw, nr, _ = _axis_expand(l, w, r, w_mul) 
     nu, nh, nd, _ = _axis_expand(u, h, d, h_mul)
-    new_bbox = BoundingBox(nl, nw, nr, nu, nh, nd)
+    new_bbox = BBox(nl, nw, nr, nu, nh, nd)
     return new_bbox
 
 
@@ -441,7 +442,7 @@ def _invert(tensor: Tensor) -> Tensor:
 
 class RoundingMode(Enum):
     ROUND = torch.round
-    FLOOR = tourch.floor
+    FLOOR = torch.floor
     CEILING = torch.ceil
 
 
@@ -730,7 +731,7 @@ def _outer_sum(lhs: Tensor, rhs: Tensor) -> Tensor:
 
 def special_jinc(x: Tensor) -> Tensor:
     _check([
-        "tensor.is_floating_point()",
+        "x.is_floating_point()",
     ])
     p0: Tensor = (2 / pi) * torch.special.bessel_j1(pi * x) / x
     j = p0.where(x != 0, 1)
@@ -739,7 +740,7 @@ def special_jinc(x: Tensor) -> Tensor:
 
 def special_gaussian(x: Tensor, sigma: float) -> Tensor:
     _check([
-        "tensor.is_floating_point()",
+        "x.is_floating_point()",
         "sigma > 0",
     ])
     coef = 1 / (sigma * sqrt(2 * pi))
@@ -749,7 +750,7 @@ def special_gaussian(x: Tensor, sigma: float) -> Tensor:
 
 def special_derivative_of_gaussian(x: Tensor, sigma: float) -> Tensor:
     _check([
-        "tensor.is_floating_point()",
+        "x.is_floating_point()",
         "sigma > 0",
     ])
     coef = -1 / (sigma**3 * sqrt(2 * pi))
@@ -931,7 +932,7 @@ def transform_pad_dim_zero(tensor: Tensor, dim: int, pad: tuple[int, int]) -> Te
     return padded
 
 
-def transform_uncrop_from_bbox(tensor: Tensor, bbox: BoundingBox, dim_h: int, dim_w: int) -> Tensor:
+def transform_uncrop_from_bbox(tensor: Tensor, bbox: BBox, dim_h: int, dim_w: int) -> Tensor:
     _check([
         "bbox.valid",
         "_valid_dims(tensor, (dim_h, dim_w))",
@@ -943,7 +944,7 @@ def transform_uncrop_from_bbox(tensor: Tensor, bbox: BoundingBox, dim_h: int, di
     return uncropped
 
 
-def transform_crop_to_bbox(tensor: Tensor, bbox: BoundingBox, dim_h: int, dim_w: int) -> Tensor:
+def transform_crop_to_bbox(tensor: Tensor, bbox: BBox, dim_h: int, dim_w: int) -> Tensor:
     _check([
         "bbox.valid",
         "_valid_dims(tensor, (dim_h, dim_w))",
@@ -1127,39 +1128,38 @@ def _check(preconditions):
 
 
 def _is_type(value, expected_type) -> bool:
-    value_type = type(value)
-    match type(expected_type):
-        case type:
-            return value_type == expected_type
-        case GenericAlias:
-            origin_type = expected_type.__origin__
-            if value_type != origin_type:
-                return False
-            ga_args = expected_type.__args__
-            match origin_type:
-                case tuple:
-                    if len(value) != len(ga_args):
-                        return False
-                    for v, t in zip(value, ga_args):
-                        if not is_type(v, t):
-                            return False
-                case list:
-                    if len(ga_args) != 1:
-                        return False
-                    for v in value:
-                        if not is_type(v, ga_args[0]):
-                            return False
-                default:
-                    raise NotImplementedError(f"Type checking not yet implemented for subscripted {vtype}.")
-            return True 
-        case UnionType:
-            ut_args = expected_type.__args__
-            for t in ut_args:
-                if _is_type(value, t):
-                    return True
+    if isinstance(expected_type, GenericAlias):
+        origin_type = expected_type.__origin__
+        if not isinstance(value, origin_type):
             return False
-        default:
-            raise NotImplementedError(f"Type checking not yet implemented for {type(expected_type)}.")
+        ga_args = expected_type.__args__
+        if origin_type == tuple:
+            if len(value) != len(ga_args):
+                return False
+            for v, t in zip(value, ga_args):
+                if not _is_type(v, t):
+                    return False
+        elif origin_type == list:
+            if len(ga_args) != 1:
+                return False
+            for v in value:
+                if not _is_type(v, ga_args[0]):
+                    return False
+        else:
+            raise NotImplementedError(f"Type checking not yet implemented for subscripted {vtype}.")
+        return True 
+    elif isinstance(expected_type, _CallableGenericAlias):
+        # We don't do param/return type checking
+        origin_type = expected_type.__origin__
+        return isinstance(value, origin_type)
+    elif isinstance(expected_type, UnionType):
+        ut_args = expected_type.__args__
+        for t in ut_args:
+            if _is_type(value, t):
+                return True
+        return False
+    else:
+        return isinstance(value, expected_type)
 
 
 def _valid_dim(tensor: Tensor, dim: int) -> bool:
@@ -1187,12 +1187,12 @@ def _positive(iter: Iterable) -> bool:
     return True
 
 
-def _is_broadcastable_to(from: Tensor | int | float, to: Tensor) -> bool:
-    if type(from) in (int, float) or from.dim() == 0:
+def _is_broadcastable_to(from_: Tensor | int | float, to_: Tensor) -> bool:
+    if type(from_) in (int, float) or from_.dim() == 0:
         return True
-    if from.dim() > to.dim():
+    if from_.dim() > to_.dim():
         return False
-    for f, t in zip(reversed(from.shape), reversed(to.shape)):
-        if f !== 1 and f !== t:
+    for f, t in zip(reversed(from_.shape), reversed(to_.shape)):
+        if f != 1 and f != t:
             return False
     return True
