@@ -424,32 +424,38 @@ def filter_patch_range_normalize(gtf: Tensor, radius: int) -> Tensor:
 
 # MORPHOLOGICAL
 
-# precondition: radius > 0
-def filter_morpho_dilate(tensor: Tensor, radius: int) -> Tensor:
+def filter_morpho_dilate(tensor: Tensor, radius: int, dims: tuple[int, int]) -> Tensor:
+    _check([
+        "_valid_dims(tensor, dims)",
+        "radius > 0",
+    ])
     kernel_size = 2 * radius - 1
     padding = radius - 1
-    dilated = F.max_pool2d(tensor, kernel_size, stride=1, padding=padding)
-    return dilated
+    permuted = utils_dims_to_end(tensor, dims)
+    reshaped = permuted.flatten(0, -3).unsqueeze(0)
+    dilated = F.max_pool2d(reshaped, kernel_size, stride=1, padding=padding)
+    unpermuted = utils_dims_from_end(dilated.reshape(*permuted.shape), dims)
+    return unpermuted
 
 
-def filter_morpho_erode(tensor: Tensor, radius: int) -> Tensor:
-    eroded = _invert(dilate(_invert(tensor), radius))
-    return eroded
-
-
-def filter_morpho_close(tensor: Tensor, radius: int) -> Tensor:
-    closed = erode(dilate(tensor, radius), radius)
-    return closed
-
-
-def filter_morpho_open(tensor: Tensor, radius: int) -> Tensor:
-    opened = dilate(erode(tensor, radius), radius)
-    return opened
-
-
-def _invert(tensor: Tensor) -> Tensor:
-    inverted = (1.0 - tensor)
-    return inverted
+# def filter_morpho_erode(tensor: Tensor, radius: int) -> Tensor:
+#     eroded = _invert(dilate(_invert(tensor), radius))
+#     return eroded
+# 
+# 
+# def filter_morpho_close(tensor: Tensor, radius: int) -> Tensor:
+#     closed = erode(dilate(tensor, radius), radius)
+#     return closed
+# 
+# 
+# def filter_morpho_open(tensor: Tensor, radius: int) -> Tensor:
+#     opened = dilate(erode(tensor, radius), radius)
+#     return opened
+# 
+# 
+# def _invert(tensor: Tensor) -> Tensor:
+#     inverted = (1.0 - tensor)
+#     return inverted
 
 
 # OTHER
