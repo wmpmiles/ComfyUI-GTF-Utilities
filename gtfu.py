@@ -1175,7 +1175,10 @@ def _is_type(value, expected_type) -> bool:
 
 
 def _valid_dim(tensor: Tensor, dim: int) -> bool:
-    return 0 <= dim < tensor.dim()
+    if dim >= 0:
+        return 0 <= dim < tensor.dim()
+    else:
+        return -tensor.dim() <= dim < 0
 
 
 def _valid_dims(tensor: Tensor, dims: Iterable[int]) -> bool:
