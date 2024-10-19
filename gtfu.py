@@ -3,7 +3,7 @@ import inspect
 
 import torch.nn.functional as F
 
-from typing import TypeAlias, Iterable, Callable, _CallableGenericAlias
+from typing import TypeAlias, Iterable, Callable, _CallableGenericAlias, _GenericAlias
 from types import GenericAlias, UnionType
 from dataclasses import dataclass
 from enum import Enum
@@ -1152,6 +1152,18 @@ def _is_type(value, expected_type) -> bool:
         # We don't do param/return type checking
         origin_type = expected_type.__origin__
         return isinstance(value, origin_type)
+    elif isinstance(expected_type, _GenericAlias):
+        if expected_type.__origin__ == Iterable.__origin__:
+            if not isinstance(value, Iterable):
+                return False
+            if len(expected_type.__args__) != 1:
+                raise NotImplementedError()
+            for v in value:
+                if not _is_type(v, expected_type.__args__[0]):
+                    return False
+            return True
+        else:
+            raise NotImplementedError()
     elif isinstance(expected_type, UnionType):
         ut_args = expected_type.__args__
         for t in ut_args:
