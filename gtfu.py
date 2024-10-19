@@ -1211,3 +1211,10 @@ def _is_broadcastable_to(from_: Tensor | int | float, to_: Tensor) -> bool:
         if f != 1 and f != t:
             return False
     return True
+
+
+def _ascending(iter: Iterable) -> bool:
+    for i in range(1, len(iter)):
+        if iter[i] <= iter[i - 1]:
+            return False
+    return True
