@@ -46,11 +46,11 @@ class BBox:
 
     @property
     def down_offset(self):
-        self.up + self.height
+        return self.up + self.height
 
     @property
     def right_offset(self):
-        self.left + self.width
+        return self.left + self.width
 
     @property
     def valid(self) -> bool:
@@ -94,18 +94,17 @@ def bbox_expand_area(bbox: BBox, area_multiplier: float) -> BBox:
     u, h, d, am = _axis_expand(bbox.up, bbox.height, bbox.down, area_multiplier / am)
     l, w, r, __ = _axis_expand(bbox.left, bbox.width, bbox.right, area_multiplier / am)
     expanded = BBox(l, w, r, u, h, d)
-    return new_lrud
+    return expanded
 
 
 def bbox_outer_square(bbox: BBox) -> BBox:
     _check([
         "bbox.valid",
     ])
-    l, w, r, u, h, d = bbox
-    w_mul = max(h / w, 1)
-    h_mul = max(w / h, 1)
-    nl, nw, nr, _ = _axis_expand(l, w, r, w_mul) 
-    nu, nh, nd, _ = _axis_expand(u, h, d, h_mul)
+    w_mul = max(bbox.height / bbox.width, 1)
+    h_mul = max(bbox.width / bbox.height, 1)
+    nl, nw, nr, _ = _axis_expand(bbox.left, bbox.width, bbox.right, w_mul) 
+    nu, nh, nd, _ = _axis_expand(bbox.up, bbox.height, bbox.down, h_mul)
     new_bbox = BBox(nl, nw, nr, nu, nh, nd)
     return new_bbox
 
@@ -118,7 +117,7 @@ def _axis_expand(a: int, b: int, c: int, m: float) -> tuple[int, int, int, float
     new_a = max(0, a - delta // 2)
     new_c = max(0, total - (new_a + new_b))
     new_a = total - (new_b + new_c)
-    return (new_a, new_b, new_c)
+    return (new_a, new_b, new_c, actual_m)
 
 
 #                    #
@@ -189,13 +188,13 @@ def colorspace_linear_from_log2(tensor: Tensor, eps: float = 0.00001) -> Tensor:
 # === CONVERSION === #
 #                    #
 
-def convert_luminance_from_linear_srgb_float_tensor(tensor: Tensor, channel_dim: int) -> Tensor:
+def convert_luminance_from_linear_srgb(tensor: Tensor, channel_dim: int) -> Tensor:
     _check([
         "tensor.is_floating_point()",
         "_valid_dim(tensor, channel_dim)",
         "tensor.shape[channel_dim] == 3",
     ])
-    coef_shape = [1] * torch.dims
+    coef_shape = [1] * tensor.dim()
     coef_shape[channel_dim] = 3
     luminance_coef = torch.tensor((0.2126, 0.7152, 0.0722)).reshape(*coef_shape)
     luminance = (tensor * luminance_coef).sum(channel_dim, keepdims=True)
@@ -452,7 +451,7 @@ def filter_quantize(tensor: Tensor, steps: int, mode: RoundingMode) -> Tensor:
         "steps > 1",
     ])
     max_val = steps - 1
-    quantized = mode(tensor * max_val) / max_val
+    quantized = mode.value(tensor * max_val) / max_val
     return quantized
 
 
@@ -796,7 +795,7 @@ def tonemap_reinhard_luminance(tensor: Tensor, luminance: Tensor) -> Tensor:
     _check([
         "tensor.is_floating_point()",
         "luminance.is_floating_point()",
-        "luminance.shape == tensor.shape",
+        "_is_broadcastable_to(luminance, tensor)",
     ])
     tonemapped = tensor / (1 + luminance)
     return tonemapped
@@ -816,7 +815,7 @@ def tonemap_reinhard_extended_luminance(tensor: Tensor, luminance: Tensor, white
     _check([
         "tensor.is_floating_point()",
         "luminance.is_floating_point()",
-        "luminance.shape == tensor.shape",
+        "_is_broadcastable_to(luminance, tensor)",
         "type(whitepoint) == float or whitepoint.is_floating_point()",
         "_is_broadcastable_to(whitepoint, tensor)",
     ])
@@ -828,10 +827,10 @@ def tonemap_reinhard_jodie(tensor: Tensor, luminance: Tensor) -> Tensor:
     _check([
         "tensor.is_floating_point()",
         "luminance.is_floating_point()",
-        "luminance.shape == tensor.shape",
+        "_is_broadcastable_to(luminance, tensor)",
     ])
-    t_reinhard = reinhard(tensor)
-    t_reinhard_luminance = reinhard_luminance(tensor, luminance)
+    t_reinhard = tonemap_reinhard(tensor)
+    t_reinhard_luminance = tonemap_reinhard_luminance(tensor, luminance)
     lerped = torch.lerp(t_reinhard_luminance, t_reinhard, t_reinhard)
     return lerped
 
@@ -840,12 +839,12 @@ def tonemap_reinhard_jodie_extended(tensor: Tensor, luminance: Tensor, whitepoin
     _check([
         "tensor.is_floating_point()",
         "luminance.is_floating_point()",
-        "luminance.shape == tensor.shape",
+        "_is_broadcastable_to(luminance, tensor)",
         "type(whitepoint) == float or whitepoint.is_floating_point()",
         "_is_broadcastable_to(whitepoint, tensor)",
     ])
-    t_reinhard = reinhard_extended(tensor, whitepoint)
-    t_reinhard_luminance = reinhard_extended_luminance(tensor, luminance, whitepoint)
+    t_reinhard = tonemap_reinhard_extended(tensor, whitepoint)
+    t_reinhard_luminance = tonemap_reinhard_extended_luminance(tensor, luminance, whitepoint)
     lerped = torch.lerp(t_reinhard_luminance, t_reinhard, t_reinhard)
     return lerped
 
@@ -915,9 +914,13 @@ def transform_pad_dim_reflect(tensor: Tensor, dim: int, pad: tuple[int, int]) ->
 
 
 def transform_pad_dim2_reflect(tensor: Tensor, dims: tuple[int, int], pad: tuple[tuple[int, int], tuple[int, int]]) -> Tensor:
+    _check([
+        "_valid_dims(tensor, dims)",
+        "_nonnegative(pad[0]) and _nonnegative(pad[1])",
+    ])
     p0 = tensor
-    p1 = transform_pad_dim_reflect(p0, dim[0], pad[0])
-    p2 = transform_pad_dim_reflect(p1, dim[1], pad[1])
+    p1 = transform_pad_dim_reflect(p0, dims[0], pad[0])
+    p2 = transform_pad_dim_reflect(p1, dims[1], pad[1])
     return p2
 
 
@@ -951,9 +954,10 @@ def transform_crop_to_bbox(tensor: Tensor, bbox: BBox, dim_h: int, dim_w: int) -
         "tensor.shape[dim_h] == bbox.total_height",
         "tensor.shape[dim_w] == bbox.total_width",
     ])
-    cropped_h = tensor[util_slice_dim(dim_h, bbox.up, bbox.down_offset)]
-    cropped = tensor[util_slice_dim(dim_w, bbox.left, bbox.right_offset)]
-    return cropped
+    c0 = tensor
+    c1 = c0[util_slice_dim(dim_h, bbox.up, bbox.down_offset)]
+    c2 = c1[util_slice_dim(dim_w, bbox.left, bbox.right_offset)]
+    return c2
 
 
 def transform_connected_components_from_2d_binary(tensor: Tensor, diagonals: bool = False) -> list[Tensor]:
