@@ -336,24 +336,36 @@ def convert_otsus_method(gtf: Tensor, bins: int) -> Tensor:
 # === FILTERING === #
 #                   #
 
-def filter_convolve_2d(gtf: Tensor, kernel: Tensor) -> Tensor:
-    b, c, _, _ = gtf_tensor.shape
-    kb, kc, kh, kw = gtf_kernel.shape
-    if kh % 2 == 0 or kw % 2 == 0:
-        raise ValueError("Kernels must have odd height and width.")
-    if kb != 1 and kb != b:
-        raise ValueError("A kernel with batch size greater than 1 must have the same batch size as the GTF.")
-    if kc != 1 and kc != c:
-        raise ValueError("A kernel with more than 1 channel must have the same number of channels as the GTF.")
-    kernel_expanded = gtf_kernel.expand(b, c, -1, -1)
+def filter_convolve_2d(tensor: Tensor, kernel: Tensor, dims: tuple[int, int]) -> Tensor:
+    _check([
+        "_valid_dims(tensor, dims)",
+        "_ascending(dims)",
+        "kernel.dim() == 2",
+        "kernel.shape[0] % 2 == 1 and kernel.shape[1] % 2 == 1",
+    ])
+    kh, kw = kernel.shape
+    kernel_reshaped = kernel.reshape(1, 1, kh, kw)
     ph, pw = kh // 2, kw // 2
-    padded_h = transform_pad_dim_reflect(gtf_tensor, 2, (ph, ph))
-    padded = transform_pad_dim_reflect(padded_h, 3, (pw, pw))
-    convolved = []
-    for (b, k) in zip(padded, kernel_expanded):
-        convolved += [F.conv2d(b.unsqueeze(0), k.unsqueeze(1), groups=c)]
-    concatenated = torch.cat(convolved)
-    return concatenated
+    permuted = utils_dims_to_end(tensor, dims)
+    padded = transform_pad_dim2_reflect(permuted, (tensor.dim() - 2, tensor.dim() - 1), ((ph, ph), (pw, pw)))
+    flattened = padded.flatten(0,-3).unsqueeze(0)
+    convolved = F.conv2d(flattened, kernel_reshaped, groups=flattened.shape[0])
+    reshaped = convolved.reshape(*permuted.shape)
+    unpermuted = utils_dims_from_end(reshaped, dims)
+    return unpermuted
+
+
+def filter_convolve_2d_separable(tensor: Tensor, kernels: tuple[Tensor, Tensor], dims: tuple[int, int]) -> Tensor:
+    _check([
+        "kernels[0].dim() == 1 and kernels[1].dim() == 1",
+        "kernels[0].shape[0] % 2 == 1 and kernels[1].shape[0] % 2 == 1",
+        "_ascending(dims)",
+        "_valid_dims(tensor, dims)",
+    ])
+    c0 = tensor
+    c1 = filter_convolve_2d(tensor, kernels[0].reshape(-1, 1), dims)
+    c2 = filter_convolve_2d(tensor, kernels[1].reshape(1, -1), dims)
+    return c2
 
 
 def filter_hysteresis_threshold(gtf_weak: Tensor, gtf_strong: Tensor) -> Tensor:
