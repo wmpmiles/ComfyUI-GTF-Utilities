@@ -1103,6 +1103,29 @@ def util_cartesian_from_polar(tensor_r: Tensor, tensor_theta: Tensor) -> tuple[T
     x = tensor_r * torch.cos(tensor_theta)
     y = tensor_r * torch.sin(tensor_theta)
     return (x, y)
+
+
+def utils_dims_to_end(tensor: Tensor, dims: Iterable[int]) -> Tensor:
+    _check([
+        "_valid_dims(tensor, dims)",
+        "_ascending(dims)",
+    ])
+    permutation = [x for x in range(tensor.dim()) if x not in dims] + list(dims)
+    permuted = tensor.permute(*permutation)
+    return permuted
+
+
+def utils_dims_from_end(tensor: Tensor, dims: Iterable[int]) -> Tensor:
+    _check([
+        "_valid_dims(tensor, dims)",
+        "_ascending(dims)",
+    ])
+    unpermutation = [x for x in range(tensor.dim() - len(dims))]
+    dim_indices = [x for x in range(tensor.dim() - len(dims), tensor.dim())]
+    for dim, index in zip(reversed(dims), reversed(dim_indices)):
+        unpermutation = unpermutation[:dim] + [index] + unpermutation[dim:]
+    unpermuted = tensor.permute(unpermutation)
+    return unpermuted
     
 
 #                             #
