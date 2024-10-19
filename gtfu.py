@@ -886,25 +886,34 @@ def tonemap_uncharted_2(tensor: Tensor) -> Tensor:
     return tonemapped
 
 
-def tonemap_aces(tensor: Tensor) -> Tensor:
+def tonemap_aces(tensor: Tensor, channel_dim: int) -> Tensor:
     _check([
         "tensor.is_floating_point()",
+        "_valid_dim(tensor, channel_dim)",
+        "tensor.shape[channel_dim] == 3",
     ])
-    ACES_INPUT = Tensor((
+    INPUT_MAT = torch.tensor((
         (0.59719, 0.35458, 0.04823),
         (0.07600, 0.90834, 0.01566),
         (0.02840, 0.13383, 0.83777),
-    )).reshape(1, 3, 3, 1, 1)
-    ACES_OUTPUT = Tensor((
+    ))
+    OUTPUT_MAT = torch.tensor((
         (+1.60475, -0.53108, -0.07367),
         (-0.10208, +1.10813, -0.00605),
         (-0.00327, -0.07276, +1.07602),
-    )).reshape(1, 3, 3, 1, 1)
-    input = (tensor.unsqueeze(2) * ACES_INPUT).sum(2)
-    rtt_odt_fit = (input * (input + 0.0245786) - 0.000090537) \
-        / (input * (0.983729 * input + 0.4329510) + 0.238081)
-    output = (rtt_odt_fit.unsqueeze(2) * ACES_OUTPUT).sum(2)
-    return output
+    ))
+
+    permuted = utils_dims_to_end(tensor, (channel_dim, ))
+    input = (permuted.unsqueeze(-2) * INPUT_MAT).sum(-1)
+
+    a = input * (input + 0.0245786) - 0.000090537
+    b = input * (0.983729 * input + 0.4329510) + 0.238081
+    rtt_odt_fit = a / b
+
+    tonemapped = (rtt_odt_fit.unsqueeze(-2) * OUTPUT_MAT).sum(-1).clamp(0, 1)
+    unpermuted = utils_dims_from_end(tonemapped, (channel_dim, ))
+    return unpermuted
+
 
 #                    #
 # === TRANSFORMS === #
