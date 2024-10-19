@@ -1103,6 +1103,9 @@ def util_slice_dim(
     stop: int | None,
     step: int | None = 1
 ) -> list[slice]:
+    _check([
+        "dim >= 0",
+    ])
     slices = [slice(None) for _ in range(dim)] + [slice(start, stop, step)]
     return slices
 
