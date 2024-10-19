@@ -77,11 +77,14 @@ def bbox_from_2d_binary(tensor: Tensor) -> BBox:
 def _h_min_max(tensor: Tensor) -> tuple[int, int, int]:
     th, _ = tensor.shape
     h_index = torch.arange(0, th)
+    h_index_reversed = (th - 1) - h_index
     crushed = torch.sum(tensor, 1, dtype=torch.bool)
-    u = int(torch.argmax(crushed * h_index, 0, keepdim=False) + 1)
-    d = int(torch.argmax(crushed * torch.flip(h_index, (0, )), 0, keepdim=False))
-    h = d - u
-    return (u, h, d)
+    down_offset = int(torch.amax(crushed * h_index)) + 1
+    up_offset = int(torch.amax(crushed * h_index_reversed)) + 1
+    down = th - down_offset
+    up = th - up_offset
+    height = th - (down + up)
+    return (up, height, down)
 
 
 def bbox_expand_area(bbox: BBox, area_multiplier: float) -> BBox:
