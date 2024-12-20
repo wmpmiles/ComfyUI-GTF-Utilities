@@ -965,6 +965,17 @@ def transform_pad_dim_zero(tensor: Tensor, dim: int, pad: tuple[int, int]) -> Te
     return padded
 
 
+def transform_pad_dim2_zero(tensor: Tensor, dims: tuple[int, int], pad: tuple[tuple[int, int], tuple[int, int]]) -> Tensor:
+    _check([
+        "_valid_dims(tensor, dims)",
+        "_nonnegative(pad[0]) and _nonnegative(pad[1])",
+    ])
+    p0 = tensor
+    p1 = transform_pad_dim_zero(p0, dims[0], pad[0])
+    p2 = transform_pad_dim_zero(p1, dims[1], pad[1])
+    return p2
+
+
 def transform_uncrop_from_bbox(tensor: Tensor, bbox: BBox, dim_h: int, dim_w: int) -> Tensor:
     _check([
         "bbox.valid",
