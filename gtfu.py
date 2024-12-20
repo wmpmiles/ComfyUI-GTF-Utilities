@@ -363,8 +363,8 @@ def filter_convolve_2d_separable(tensor: Tensor, kernels: tuple[Tensor, Tensor],
         "_valid_dims(tensor, dims)",
     ])
     c0 = tensor
-    c1 = filter_convolve_2d(tensor, kernels[0].reshape(-1, 1), dims)
-    c2 = filter_convolve_2d(tensor, kernels[1].reshape(1, -1), dims)
+    c1 = filter_convolve_2d(c0, kernels[0].reshape(-1, 1), dims)
+    c2 = filter_convolve_2d(c1, kernels[1].reshape(1, -1), dims)
     return c2
 
 
