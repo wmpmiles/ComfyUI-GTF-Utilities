@@ -1108,6 +1108,13 @@ def util_tensor_max(tensor: Tensor, dims: Iterable[int]) -> Tensor:
     return curr
 
 
+def util_tensor_mean(tensor: Tensor, dims: Iterable[int]) -> Tensor:
+    curr = tensor
+    for dim in dims:
+        curr = torch.mean(curr, dim, True)
+    return curr
+
+
 def util_slice_dim(
     dim: int,
     start: int | None,
